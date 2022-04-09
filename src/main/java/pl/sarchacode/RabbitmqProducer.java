@@ -1,7 +1,8 @@
 package pl.sarchacode;
 
 public class RabbitmqProducer {
-    public static void main(String[] args) {
-        System.out.println("Hello world");
-    }
+
+  public static void main(String[] args) {
+    new Benchmark(args).start();
+  }
 }
