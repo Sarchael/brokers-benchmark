@@ -35,7 +35,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>pl.sarchacode.RabbitmqProducer</mainClass>
+                                    <mainClass>pl.sarchacode.Main</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

@@ -19,6 +19,7 @@ public class BenchmarkParametersParser {
     switch (key) {
       case "-q", "--queues" -> params.setNumberOfQueues(Integer.parseInt(value));
       case "-p", "--producers" -> params.setNumberOfProducers(Integer.parseInt(value));
+      case "-c", "--consumers" -> params.setNumberOfConsumers(Integer.parseInt(value));
       case "-n", "--messages" -> params.setNumberOfMessages(Integer.parseInt(value));
       case "-s", "--size" -> params.setMessageSize(Integer.parseInt(value));
       default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -q, -p, -n, -s");
@@ -28,6 +29,7 @@ public class BenchmarkParametersParser {
   private static void validateArgs(List<String> args) {
     if (args == null || args.size() == 0)
       throw new IllegalArgumentException("No parameters available");
+
     if (args.size() % 2 == 1)
       throw new IllegalArgumentException("Wrong parameters format");
   }
@@ -36,5 +38,9 @@ public class BenchmarkParametersParser {
     if (params.getNumberOfProducers() < params.getNumberOfQueues() ||
         params.getNumberOfProducers() % params.getNumberOfQueues() != 0)
       throw new IllegalArgumentException("Number of producers must be a multiple of number of queues!");
+
+    if (params.getNumberOfConsumers() < params.getNumberOfQueues() ||
+        params.getNumberOfConsumers() % params.getNumberOfQueues() != 0)
+      throw new IllegalArgumentException("Number of consumers must be a multiple of number of queues!");
   }
 }

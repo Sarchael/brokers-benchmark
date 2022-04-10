@@ -1,37 +1,36 @@
-package pl.sarchacode;
+package pl.sarchacode.rabbitmq;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import pl.sarchacode.BenchmarkWorkerType;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
-public class Producer implements Runnable {
+public abstract class RabbitWorker implements Runnable {
+  protected final Logger logger = Logger.getLogger(RabbitWorker.class.getCanonicalName());
 
-  private static final Logger logger = Logger.getLogger(Producer.class.getCanonicalName());
+  protected final String QUEUE_NAME_PREFIX = "BENCHMARK_QUEUE_";
+  protected final String CONNECTION_NAME_PREFIX = "BENCHMARK_CONNECTION_";
+  protected String QUEUE_NAME;
+  protected String CONNECTION_NAME;
+  protected String THREAD_NAME;
 
-  private static final String QUEUE_NAME_PREFIX = "BENCHMARK_QUEUE_";
-  private static final String CONNECTION_NAME_PREFIX = "BENCHMARK_CONNECTION_";
-  private String QUEUE_NAME;
-  private String CONNECTION_NAME;
-  private String MESSAGE;
-  private Integer REPETITIONS;
-  private String THREAD_NAME;
+  protected BenchmarkWorkerType type;
+  protected Integer workerNumber;
 
-  private Integer producerNumber;
+  protected Channel channel;
+  protected Connection connection;
 
-  private Channel channel;
-  private Connection connection;
+  public abstract void doWork() throws IOException;
 
-  public Producer(int producerNumber, int queueNumber, String message, Integer repetitions) {
-    QUEUE_NAME = QUEUE_NAME_PREFIX + queueNumber;
-    CONNECTION_NAME = CONNECTION_NAME_PREFIX + producerNumber;
-    MESSAGE = message;
-    REPETITIONS = repetitions;
-
-    this.producerNumber = producerNumber;
+  public RabbitWorker(BenchmarkWorkerType type, int workerNumber, int queueNumber) {
+    this.QUEUE_NAME = QUEUE_NAME_PREFIX + queueNumber;
+    this.CONNECTION_NAME = CONNECTION_NAME_PREFIX + workerNumber;
+    this.workerNumber = workerNumber;
+    this.type = type;
   }
 
   @Override
@@ -39,8 +38,9 @@ public class Producer implements Runnable {
     THREAD_NAME = Thread.currentThread().getName();
     try {
       initializeConnection();
-      sendMessages();
-      closeConnection();
+      doWork();
+      if (type == BenchmarkWorkerType.PRODUCER)
+        closeConnection();
     } catch (IOException | TimeoutException e) {
       logger.severe(e.getMessage());
     }
@@ -60,21 +60,13 @@ public class Producer implements Runnable {
     logger.info(THREAD_NAME + ": Connection initialized");
   }
 
-  public void sendMessages() throws IOException {
-    for (int i = 0; i < REPETITIONS; i++)
-      channel.basicPublish("", QUEUE_NAME, null, MESSAGE.getBytes());
-
-    logger.info(THREAD_NAME + ": Messages sent");
-  }
-
   public void closeConnection() throws IOException, TimeoutException {
     channel.close();
     connection.close();
-
     logger.info(THREAD_NAME + ": Connection closed");
   }
 
-  public Integer getProducerNumber() {
-    return producerNumber;
+  public Integer getWorkerNumber() {
+    return workerNumber;
   }
 }

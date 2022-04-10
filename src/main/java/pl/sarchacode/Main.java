@@ -1,6 +1,6 @@
 package pl.sarchacode;
 
-public class RabbitmqProducer {
+public class Main {
 
   public static void main(String[] args) {
     new Benchmark(args).start();

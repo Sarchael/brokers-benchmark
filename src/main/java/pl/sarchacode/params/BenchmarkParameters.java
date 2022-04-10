@@ -2,6 +2,7 @@ package pl.sarchacode.params;
 
 public class BenchmarkParameters {
   private Integer numberOfProducers;
+  private Integer numberOfConsumers;
   private Integer numberOfQueues;
   private Integer numberOfMessages;
   private Integer messageSize;
@@ -12,6 +13,14 @@ public class BenchmarkParameters {
 
   public void setNumberOfProducers(Integer numberOfProducers) {
     this.numberOfProducers = numberOfProducers;
+  }
+
+  public Integer getNumberOfConsumers() {
+    return numberOfConsumers;
+  }
+
+  public void setNumberOfConsumers(Integer numberOfConsumers) {
+    this.numberOfConsumers = numberOfConsumers;
   }
 
   public Integer getNumberOfQueues() {

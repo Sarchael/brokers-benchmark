@@ -1,4 +1,4 @@
-package pl.sarchacode;
+package pl.sarchacode.rabbitmq;
 
 public class RabbitProperties {
   public static final String HOST = "192.168.1.31";
