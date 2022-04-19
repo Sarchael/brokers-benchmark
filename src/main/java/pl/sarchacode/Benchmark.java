@@ -35,7 +35,8 @@ public class Benchmark {
       producerThreads.add(new RabbitProducer(i + 1,
                                              queueNumber + 1,
                                              prepareMessage(benchmarkParameters.getMessageSize()),
-                                             Optional.ofNullable(benchmarkParameters.getNumberOfMessages())));
+                                             Optional.ofNullable(benchmarkParameters.getNumberOfMessages()),
+                                             Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost())));
       if (++queueNumber >= benchmarkParameters.getNumberOfQueues())
         queueNumber = 0;
     }
@@ -45,7 +46,8 @@ public class Benchmark {
     int queueNumber = 0;
     for (int i = 0; i < benchmarkParameters.getNumberOfConsumers(); i++) {
       consumerThreads.add(new RabbitConsumer(i + 1,
-                                             queueNumber + 1));
+                                             queueNumber + 1,
+                                             Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost())));
       if (++queueNumber >= benchmarkParameters.getNumberOfQueues())
         queueNumber = 0;
     }

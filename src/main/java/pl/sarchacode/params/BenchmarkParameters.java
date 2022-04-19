@@ -4,6 +4,7 @@ import pl.sarchacode.Broker;
 
 public class BenchmarkParameters {
   private Broker broker;
+  private Boolean brokerOnLocalhost;
   private Integer numberOfProducers;
   private Integer numberOfConsumers;
   private Integer numberOfQueues;
@@ -16,6 +17,14 @@ public class BenchmarkParameters {
 
   public void setBroker(Broker broker) {
     this.broker = broker;
+  }
+
+  public Boolean getBrokerOnLocalhost() {
+    return brokerOnLocalhost;
+  }
+
+  public void setBrokerOnLocalhost(Boolean brokerOnLocalhost) {
+    this.brokerOnLocalhost = brokerOnLocalhost;
   }
 
   public Integer getNumberOfProducers() {

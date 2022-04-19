@@ -4,14 +4,15 @@ import pl.sarchacode.BenchmarkWorkerType;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class RabbitConsumer extends RabbitWorker {
   private Consumer<String> callback;
   private int messageCounter = 0;
 
-  public RabbitConsumer(int workerNumber, int queueNumber) {
-    super(BenchmarkWorkerType.CONSUMER, workerNumber, queueNumber);
+  public RabbitConsumer(int workerNumber, int queueNumber, Optional<Boolean> brokerOnLocalhost) {
+    super(BenchmarkWorkerType.CONSUMER, workerNumber, queueNumber, brokerOnLocalhost.orElse(Boolean.FALSE));
     this.callback = x -> messageCounter++;
   }
 

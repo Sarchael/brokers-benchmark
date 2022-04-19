@@ -9,8 +9,9 @@ public class RabbitProducer extends RabbitWorker {
   private String MESSAGE;
   private Optional<Integer> REPETITIONS;
 
-  public RabbitProducer(int workerNumber, int queueNumber, String message, Optional<Integer> repetitions) {
-    super(BenchmarkWorkerType.PRODUCER, workerNumber, queueNumber);
+  public RabbitProducer(int workerNumber, int queueNumber, String message, Optional<Integer> repetitions,
+                        Optional<Boolean> brokerOnLocalhost) {
+    super(BenchmarkWorkerType.PRODUCER, workerNumber, queueNumber, brokerOnLocalhost.orElse(Boolean.FALSE));
     this.MESSAGE = message;
     this.REPETITIONS = repetitions;
   }

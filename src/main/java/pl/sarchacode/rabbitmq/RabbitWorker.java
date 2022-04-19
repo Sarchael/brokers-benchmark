@@ -24,13 +24,16 @@ public abstract class RabbitWorker implements Runnable {
   protected Channel channel;
   protected Connection connection;
 
+  private boolean brokerOnLocalhost;
+
   public abstract void doWork() throws IOException;
 
-  public RabbitWorker(BenchmarkWorkerType type, int workerNumber, int queueNumber) {
+  public RabbitWorker(BenchmarkWorkerType type, int workerNumber, int queueNumber, boolean brokerOnLocalhost) {
     this.QUEUE_NAME = QUEUE_NAME_PREFIX + queueNumber;
     this.CONNECTION_NAME = CONNECTION_NAME_PREFIX + workerNumber;
     this.workerNumber = workerNumber;
     this.type = type;
+    this.brokerOnLocalhost = brokerOnLocalhost;
   }
 
   @Override
@@ -48,7 +51,7 @@ public abstract class RabbitWorker implements Runnable {
 
   public void initializeConnection() throws IOException, TimeoutException {
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setHost(RabbitProperties.HOST);
+    factory.setHost(this.brokerOnLocalhost ? RabbitProperties.HOST_LOCAL : RabbitProperties.HOST);
     factory.setPort(RabbitProperties.PORT);
     factory.setUsername(RabbitProperties.USERNAME);
     factory.setPassword(RabbitProperties.PASSWORD);
