@@ -39,19 +39,16 @@ public class Benchmark {
       if (++queueNumber >= benchmarkParameters.getNumberOfQueues())
         queueNumber = 0;
     }
-    logger.info("Producers threads are ready");
   }
 
   private void prepareConsumerThreads() {
     int queueNumber = 0;
     for (int i = 0; i < benchmarkParameters.getNumberOfConsumers(); i++) {
       consumerThreads.add(new RabbitConsumer(i + 1,
-                                             queueNumber + 1,
-                                              x -> { }));
+                                             queueNumber + 1));
       if (++queueNumber >= benchmarkParameters.getNumberOfQueues())
         queueNumber = 0;
     }
-    logger.info("Consumers threads are ready");
   }
 
   private void runProducers() {
@@ -64,8 +61,8 @@ public class Benchmark {
     logger.info("Consumers threads are running");
   }
 
-  private String prepareMessage(Integer numberOfMessages) {
-    char[] chars = new char[numberOfMessages];
+  private String prepareMessage(Integer messageSize) {
+    char[] chars = new char[messageSize];
     Arrays.fill(chars, 'x');
     return new String(chars);
   }

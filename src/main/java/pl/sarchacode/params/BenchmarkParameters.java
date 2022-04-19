@@ -1,11 +1,22 @@
 package pl.sarchacode.params;
 
+import pl.sarchacode.Broker;
+
 public class BenchmarkParameters {
+  private Broker broker;
   private Integer numberOfProducers;
   private Integer numberOfConsumers;
   private Integer numberOfQueues;
   private Integer numberOfMessages;
   private Integer messageSize;
+
+  public Broker getBroker() {
+    return broker;
+  }
+
+  public void setBroker(Broker broker) {
+    this.broker = broker;
+  }
 
   public Integer getNumberOfProducers() {
     return numberOfProducers;

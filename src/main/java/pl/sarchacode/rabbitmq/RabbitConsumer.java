@@ -10,14 +10,9 @@ public class RabbitConsumer extends RabbitWorker {
   private Consumer<String> callback;
   private int messageCounter = 0;
 
-  public RabbitConsumer(int workerNumber, int queueNumber, Consumer<String> callback) {
+  public RabbitConsumer(int workerNumber, int queueNumber) {
     super(BenchmarkWorkerType.CONSUMER, workerNumber, queueNumber);
-    //this.callback = callback;
-    this.callback = x -> {
-      messageCounter++;
-      if (messageCounter % 100000 == 0)
-        logger.info(THREAD_NAME + ": Recieved messages: " + messageCounter);
-    };
+    this.callback = x -> messageCounter++;
   }
 
   @Override

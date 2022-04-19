@@ -1,5 +1,7 @@
 package pl.sarchacode.params;
 
+import pl.sarchacode.Broker;
+
 import java.util.List;
 
 public class BenchmarkParametersParser {
@@ -17,12 +19,13 @@ public class BenchmarkParametersParser {
 
   private static void setParameter(BenchmarkParameters params, String key, String value) {
     switch (key) {
+      case "-b", "--broker" -> params.setBroker(Broker.getByName(value));
       case "-q", "--queues" -> params.setNumberOfQueues(Integer.parseInt(value));
       case "-p", "--producers" -> params.setNumberOfProducers(Integer.parseInt(value));
       case "-c", "--consumers" -> params.setNumberOfConsumers(Integer.parseInt(value));
       case "-n", "--messages" -> params.setNumberOfMessages(Integer.parseInt(value));
       case "-s", "--size" -> params.setMessageSize(Integer.parseInt(value));
-      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -q, -p, -n, -s");
+      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -q, -p, -c, -n, -s");
     }
   }
 
