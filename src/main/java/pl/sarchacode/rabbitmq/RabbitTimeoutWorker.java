@@ -55,7 +55,7 @@ public class RabbitTimeoutWorker extends TimerTask {
   }
 
   private void saveStats(List<Long> consumersStats, List<Long> producersStats) throws IOException {
-    int time = 0;
+    int time = 5;
     FileWriter out = new FileWriter(createFileName());
     out.write("time,consuming,producing\n");
     for (int i = 0; i < consumersStats.size(); i++) {
