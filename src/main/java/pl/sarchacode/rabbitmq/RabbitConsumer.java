@@ -9,11 +9,10 @@ import java.util.function.Consumer;
 
 public class RabbitConsumer extends RabbitWorker {
   private Consumer<String> callback;
-  private int messageCounter = 0;
 
   public RabbitConsumer(int workerNumber, int queueNumber, Optional<Boolean> brokerOnLocalhost) {
     super(BenchmarkWorkerType.CONSUMER, workerNumber, queueNumber, brokerOnLocalhost.orElse(Boolean.FALSE));
-    this.callback = x -> messageCounter++;
+    this.callback = x -> processedMessages.incrementAndGet();
   }
 
   @Override

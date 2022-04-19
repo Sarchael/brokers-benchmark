@@ -24,21 +24,33 @@ public class BenchmarkParametersParser {
       case "-q", "--queues" -> params.setNumberOfQueues(Integer.parseInt(value));
       case "-p", "--producers" -> params.setNumberOfProducers(Integer.parseInt(value));
       case "-c", "--consumers" -> params.setNumberOfConsumers(Integer.parseInt(value));
-      case "-n", "--messages" -> params.setNumberOfMessages(Integer.parseInt(value));
       case "-s", "--size" -> params.setMessageSize(Integer.parseInt(value));
-      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -l, -q, -p, -c, -n, -s");
+      case "-t", "--time" -> params.setBenchmarkDuration(Integer.parseInt(value));
+      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -l, -q, -p, -c, -s, -t");
     }
   }
 
   private static void validateArgs(List<String> args) {
     if (args == null || args.size() == 0)
-      throw new IllegalArgumentException("No parameters available");
+      throw new IllegalArgumentException("No parameters available!");
 
     if (args.size() % 2 == 1)
-      throw new IllegalArgumentException("Wrong parameters format");
+      throw new IllegalArgumentException("Wrong parameters format!");
   }
 
   private static void validateParameters(BenchmarkParameters params) {
+    if (params.getNumberOfQueues() == null)
+      throw new IllegalArgumentException("Number of queues has to be specified!");
+
+    if (params.getBenchmarkDuration() == null)
+      throw new IllegalArgumentException("Benchmark duration has to be specified!");
+
+    if (params.getBroker() == null)
+      throw new IllegalArgumentException("Broker has to be specified!");
+
+    if (params.getMessageSize() == null)
+      throw new IllegalArgumentException("Message size has to be specified!");
+
     if (params.getNumberOfProducers() < params.getNumberOfQueues() ||
         params.getNumberOfProducers() % params.getNumberOfQueues() != 0)
       throw new IllegalArgumentException("Number of producers must be a multiple of number of queues!");

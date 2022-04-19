@@ -8,8 +8,8 @@ public class BenchmarkParameters {
   private Integer numberOfProducers;
   private Integer numberOfConsumers;
   private Integer numberOfQueues;
-  private Integer numberOfMessages;
   private Integer messageSize;
+  private Integer benchmarkDuration;
 
   public Broker getBroker() {
     return broker;
@@ -51,19 +51,19 @@ public class BenchmarkParameters {
     this.numberOfQueues = numberOfQueues;
   }
 
-  public Integer getNumberOfMessages() {
-    return numberOfMessages;
-  }
-
-  public void setNumberOfMessages(Integer numberOfMessages) {
-    this.numberOfMessages = numberOfMessages;
-  }
-
   public Integer getMessageSize() {
     return messageSize;
   }
 
   public void setMessageSize(Integer messageSize) {
     this.messageSize = messageSize;
+  }
+
+  public Integer getBenchmarkDuration() {
+    return benchmarkDuration;
+  }
+
+  public void setBenchmarkDuration(Integer benchmarkDuration) {
+    this.benchmarkDuration = benchmarkDuration;
   }
 }
