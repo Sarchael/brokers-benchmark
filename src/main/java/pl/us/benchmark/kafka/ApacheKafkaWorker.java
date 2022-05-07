@@ -1,6 +1,6 @@
-package pl.sarchacode.kafka;
+package pl.us.benchmark.kafka;
 
-import pl.sarchacode.BenchmarkWorkerType;
+import pl.us.benchmark.BenchmarkWorkerType;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;

@@ -1,21 +1,21 @@
-package pl.sarchacode.rabbitmq;
+package pl.us.benchmark.kafka;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
-public class RabbitStatisticsWorker extends TimerTask {
+public class ApacheKafkaStatisticsWorker extends TimerTask {
   private long messagesProduced = 0;
   private long messagesConsumed = 0;
 
-  private List<RabbitWorker> producers;
-  private List<RabbitWorker> consumers;
+  private List<ApacheKafkaWorker> producers;
+  private List<ApacheKafkaWorker> consumers;
 
   private List<Long> producersStats;
   private List<Long> consumersStats;
 
-  public RabbitStatisticsWorker(List<RabbitWorker> producers,
-                                List<RabbitWorker> consumers) {
+  public ApacheKafkaStatisticsWorker(List<ApacheKafkaWorker> producers,
+                                     List<ApacheKafkaWorker> consumers) {
     this.producers = producers;
     this.consumers = consumers;
     this.producersStats = new ArrayList<>();
@@ -24,8 +24,8 @@ public class RabbitStatisticsWorker extends TimerTask {
 
   @Override
   public void run() {
-    long currentMessagesProduced = producers.stream().mapToLong(RabbitWorker::getProcessedMessages).sum();
-    long currentMessagesConsumed = consumers.stream().mapToLong(RabbitWorker::getProcessedMessages).sum();
+    long currentMessagesProduced = producers.stream().mapToLong(ApacheKafkaWorker::getProcessedMessages).sum();
+    long currentMessagesConsumed = consumers.stream().mapToLong(ApacheKafkaWorker::getProcessedMessages).sum();
     long producingDelta = (currentMessagesProduced - messagesProduced) / 5;
     long consumingDelta = (currentMessagesConsumed - messagesConsumed) / 5;
     messagesProduced = currentMessagesProduced;

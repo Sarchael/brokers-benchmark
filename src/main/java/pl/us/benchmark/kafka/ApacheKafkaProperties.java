@@ -1,4 +1,4 @@
-package pl.sarchacode.kafka;
+package pl.us.benchmark.kafka;
 
 import java.util.Properties;
 

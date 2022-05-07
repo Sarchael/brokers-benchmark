@@ -1,4 +1,4 @@
-package pl.sarchacode;
+package pl.us.benchmark;
 
 public class Main {
 

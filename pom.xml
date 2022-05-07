@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>pl.sarchacode</groupId>
-    <artifactId>rabbitmq-producer</artifactId>
+    <artifactId>brokers-benchmark</artifactId>
     <version>1.0</version>
 
     <properties>
@@ -40,7 +40,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>pl.sarchacode.Main</mainClass>
+                                    <mainClass>pl.us.benchmark.Main</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

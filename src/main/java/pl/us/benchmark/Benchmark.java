@@ -1,9 +1,11 @@
-package pl.sarchacode;
+package pl.us.benchmark;
 
 import pl.sarchacode.kafka.*;
-import pl.sarchacode.params.BenchmarkParameters;
-import pl.sarchacode.params.BenchmarkParametersParser;
+import pl.us.benchmark.params.BenchmarkParameters;
+import pl.us.benchmark.params.BenchmarkParametersParser;
 import pl.sarchacode.rabbitmq.*;
+import pl.us.benchmark.kafka.*;
+import pl.us.benchmark.rabbitmq.*;
 
 import java.util.*;
 import java.util.logging.Logger;

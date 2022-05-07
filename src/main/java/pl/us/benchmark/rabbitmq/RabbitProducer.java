@@ -1,6 +1,6 @@
-package pl.sarchacode.rabbitmq;
+package pl.us.benchmark.rabbitmq;
 
-import pl.sarchacode.BenchmarkWorkerType;
+import pl.us.benchmark.BenchmarkWorkerType;
 
 import java.io.IOException;
 import java.util.Optional;

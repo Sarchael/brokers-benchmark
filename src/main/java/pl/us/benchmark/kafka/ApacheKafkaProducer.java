@@ -1,8 +1,8 @@
-package pl.sarchacode.kafka;
+package pl.us.benchmark.kafka;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import pl.sarchacode.BenchmarkWorkerType;
+import pl.us.benchmark.BenchmarkWorkerType;
 
 import java.util.Optional;
 

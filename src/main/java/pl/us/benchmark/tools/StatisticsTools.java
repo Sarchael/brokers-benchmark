@@ -1,6 +1,6 @@
-package pl.sarchacode.tools;
+package pl.us.benchmark.tools;
 
-import pl.sarchacode.params.BenchmarkParameters;
+import pl.us.benchmark.params.BenchmarkParameters;
 
 import java.io.FileWriter;
 import java.io.IOException;

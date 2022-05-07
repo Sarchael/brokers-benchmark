@@ -1,4 +1,4 @@
-package pl.sarchacode.rabbitmq;
+package pl.us.benchmark.rabbitmq;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;

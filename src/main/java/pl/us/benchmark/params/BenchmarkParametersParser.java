@@ -1,6 +1,6 @@
-package pl.sarchacode.params;
+package pl.us.benchmark.params;
 
-import pl.sarchacode.Broker;
+import pl.us.benchmark.Broker;
 
 import java.util.List;
 

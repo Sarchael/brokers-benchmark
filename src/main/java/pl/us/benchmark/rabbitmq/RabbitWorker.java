@@ -1,7 +1,7 @@
-package pl.sarchacode.rabbitmq;
+package pl.us.benchmark.rabbitmq;
 
 import com.rabbitmq.client.Channel;
-import pl.sarchacode.BenchmarkWorkerType;
+import pl.us.benchmark.BenchmarkWorkerType;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;

@@ -1,24 +1,24 @@
-package pl.sarchacode.rabbitmq;
+package pl.us.benchmark.kafka;
 
-import pl.sarchacode.params.BenchmarkParameters;
-import pl.sarchacode.tools.StatisticsTools;
+import pl.us.benchmark.params.BenchmarkParameters;
+import pl.us.benchmark.tools.StatisticsTools;
 
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RabbitTimeoutWorker extends TimerTask {
-  private List<RabbitWorker> producers;
-  private List<RabbitWorker> consumers;
-  private RabbitStatisticsWorker statisticsWorker;
+public class ApacheKafkaTimeoutWorker extends TimerTask {
+  private List<ApacheKafkaWorker> producers;
+  private List<ApacheKafkaWorker> consumers;
+  private ApacheKafkaStatisticsWorker statisticsWorker;
   private Timer statisticsTimer;
   private BenchmarkParameters benchmarkParameters;
 
-  public RabbitTimeoutWorker(List<RabbitWorker> producers,
-                             List<RabbitWorker> consumers,
-                             RabbitStatisticsWorker statisticsWorker,
-                             Timer statisticsTimer,
-                             BenchmarkParameters benchmarkParameters) {
+  public ApacheKafkaTimeoutWorker(List<ApacheKafkaWorker> producers,
+                                  List<ApacheKafkaWorker> consumers,
+                                  ApacheKafkaStatisticsWorker statisticsWorker,
+                                  Timer statisticsTimer,
+                                  BenchmarkParameters benchmarkParameters) {
     this.producers = producers;
     this.consumers = consumers;
     this.statisticsWorker = statisticsWorker;
@@ -36,12 +36,12 @@ public class RabbitTimeoutWorker extends TimerTask {
       List<Long> producersStats = statisticsWorker.getProducersStats();
       statisticsWorker.cancel();
 
-      for (RabbitWorker worker : producers)
+      for (ApacheKafkaWorker worker : producers)
         worker.stopWorker();
-      consumers.forEach(Thread::interrupt);
+      for (ApacheKafkaWorker worker : consumers)
+        worker.stopWorker();
 
       Thread.sleep(5000);
-      RabbitConnectionFactory.getInstance().closeAllConnections();
 
       StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
     } catch (Exception e) {
