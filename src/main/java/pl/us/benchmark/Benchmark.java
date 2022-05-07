@@ -4,7 +4,9 @@ import pl.us.benchmark.kafka.*;
 import pl.us.benchmark.params.BenchmarkParameters;
 import pl.us.benchmark.params.BenchmarkParametersParser;
 import pl.us.benchmark.rabbitmq.*;
+import pl.us.benchmark.tools.StatisticsTools;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -27,9 +29,17 @@ public class Benchmark {
   }
 
   public void start() {
-    switch (benchmarkParameters.getBroker()) {
-      case RABBITMQ -> startRabbitBenchmark();
-      case KAFKA -> startKafkaBenchmark();
+    if (Boolean.TRUE.equals(benchmarkParameters.getStatisticsTool())) {
+      try {
+        StatisticsTools.generateFullStats();
+      } catch (IOException exc) {
+        exc.printStackTrace();
+      }
+    } else {
+      switch (benchmarkParameters.getBroker()) {
+        case RABBITMQ -> startRabbitBenchmark();
+        case KAFKA -> startKafkaBenchmark();
+      }
     }
   }
 

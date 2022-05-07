@@ -20,13 +20,14 @@ public class BenchmarkParametersParser {
   private static void setParameter(BenchmarkParameters params, String key, String value) {
     switch (key) {
       case "-b", "--broker" -> params.setBroker(Broker.getByName(value));
-      case "-l", "--localhost" -> params.setBrokerOnLocalhost(Boolean.getBoolean(value));
+      case "-l", "--localhost" -> params.setBrokerOnLocalhost(Boolean.parseBoolean(value));
       case "-q", "--queues" -> params.setNumberOfQueues(Integer.parseInt(value));
       case "-p", "--producers" -> params.setNumberOfProducers(Integer.parseInt(value));
       case "-c", "--consumers" -> params.setNumberOfConsumers(Integer.parseInt(value));
       case "-s", "--size" -> params.setMessageSize(Integer.parseInt(value));
       case "-t", "--time" -> params.setBenchmarkDuration(Integer.parseInt(value));
-      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -l, -q, -p, -c, -s, -t");
+      case "-st", "--statistics-tool" -> params.setStatisticsTool(Boolean.parseBoolean(value));
+      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -l, -q, -p, -c, -s, -t, -st");
     }
   }
 
@@ -39,6 +40,9 @@ public class BenchmarkParametersParser {
   }
 
   private static void validateParameters(BenchmarkParameters params) {
+    if (Boolean.TRUE.equals(params.getStatisticsTool()))
+      return;
+
     if (params.getNumberOfQueues() == null)
       throw new IllegalArgumentException("Number of queues has to be specified!");
 

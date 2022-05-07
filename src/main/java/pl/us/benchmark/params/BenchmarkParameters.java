@@ -10,6 +10,7 @@ public class BenchmarkParameters {
   private Integer numberOfQueues;
   private Integer messageSize;
   private Integer benchmarkDuration;
+  private Boolean statisticsTool;
 
   public Broker getBroker() {
     return broker;
@@ -65,5 +66,13 @@ public class BenchmarkParameters {
 
   public void setBenchmarkDuration(Integer benchmarkDuration) {
     this.benchmarkDuration = benchmarkDuration;
+  }
+
+  public Boolean getStatisticsTool() {
+    return statisticsTool;
+  }
+
+  public void setStatisticsTool(Boolean statisticsTool) {
+    this.statisticsTool = statisticsTool;
   }
 }
