@@ -3,6 +3,7 @@ package pl.us.benchmark.tools;
 import pl.us.benchmark.Broker;
 
 public class Statistic {
+  private String name;
   private Broker broker;
   private Integer size;
   private Integer queues;
@@ -16,6 +17,14 @@ public class Statistic {
   private Integer queueThroughputMessagesOut;
   private Integer totalThroughputTransferOut;
   private Integer queueThroughputTransferOut;
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
 
   public Broker getBroker() {
     return broker;

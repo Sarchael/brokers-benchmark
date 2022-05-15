@@ -4,6 +4,7 @@ import pl.us.benchmark.Broker;
 import pl.us.benchmark.params.BenchmarkParameters;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,25 +23,49 @@ public class StatisticsTools {
     out.close();
   }
 
-  public static void generateFullStats() throws IOException {
+  public static void generateFullStats(Boolean pairResults) throws IOException {
     File folder = new File(".");
     List<File> listOfFiles = Arrays.asList(folder.listFiles());
     Map<String, List<List<Integer>>> parsedFiles = new HashMap<>();
+
     for (File file : listOfFiles) {
-      if (file.getName().endsWith(".csv") && !file.getName().endsWith("FullStats.csv")) {
+      if (file.getName().endsWith(".csv") && !file.getName().endsWith("FullStats.csv") && !file.getName().endsWith("FullStatsPaired.csv")) {
         List<List<Integer>> records = getRecordsFromFile(file);
         parsedFiles.put(file.getName().substring(16, file.getName().lastIndexOf('.')), records);
-        List<Statistic> statistics = parsedFiles.entrySet()
-                                                .stream()
-                                                .map(x -> generateStatisticFromRawData(x.getKey(), x.getValue()))
-                                                .collect(Collectors.toList());
-        saveFullStats(statistics);
       }
+    }
+
+    List<Statistic> statistics =
+      parsedFiles.entrySet()
+                 .stream()
+                 .map(x -> generateStatisticFromRawData(x.getKey(), x.getValue()))
+                 .collect(Collectors.toList());
+
+    if (Boolean.TRUE.equals(pairResults)) {
+      List<Map<Broker, Statistic>> pairedStatsList = new ArrayList<>();
+      for (Statistic statistic : statistics) {
+        if (statistic.getBroker() == Broker.KAFKA) {
+          for (Statistic pair : statistics) {
+            if (pair.getBroker() == Broker.RABBITMQ && statistic.getSize().equals(pair.getSize()) &&
+                statistic.getQueues().equals(pair.getQueues()) && statistic.getConsumers().equals(pair.getConsumers()) &&
+                statistic.getProducers().equals(pair.getProducers())) {
+              Map<Broker, Statistic> pairedStats = new HashMap<>();
+              pairedStats.put(statistic.getBroker(), statistic);
+              pairedStats.put(pair.getBroker(), pair);
+              pairedStatsList.add(pairedStats);
+            }
+          }
+        }
+      }
+      saveFullStatsPaired(pairedStatsList);
+    } else {
+      saveFullStats(statistics);
     }
   }
 
   private static Statistic generateStatisticFromRawData(String name, List<List<Integer>> results) {
     Statistic statistic = new Statistic();
+    statistic.setName(name);
     List<String> parameters = Arrays.asList(name.split("-"));
     fillStatisticWithBenchmarkParams(statistic, parameters);
     fillStatisticWithBenchmarkResults(statistic, results);
@@ -60,17 +85,29 @@ public class StatisticsTools {
   }
 
   private static void fillStatisticWithBenchmarkResults(Statistic statistic, List<List<Integer>> results) {
-    Integer totalReceivedMessages = results.stream().mapToInt(x -> x.get(0)).sum();
-    Integer totalSentMessages = results.stream().mapToInt(x -> x.get(1)).sum();
+    Integer totalReceivedMessages = results.stream()
+                                           .mapToInt(x -> x.get(0))
+                                           .sum();
+    Long zeroValuesReceiversCount = results.stream()
+                                           .mapToInt(x -> x.get(0))
+                                           .filter(x -> x == 0)
+                                           .count();
+    Integer totalSentMessages = results.stream()
+                                       .mapToInt(x -> x.get(1))
+                                       .sum();
+    Long zeroValuesSendersCount = results.stream()
+                                         .mapToInt(x -> x.get(1))
+                                         .filter(x -> x == 0)
+                                         .count();
     Integer numberOfRecords = results.size();
 
-    statistic.setTotalThroughputMessagesIn(totalReceivedMessages / numberOfRecords);
-    statistic.setQueueThroughputMessagesIn(totalReceivedMessages / numberOfRecords / statistic.getQueues());
+    statistic.setTotalThroughputMessagesIn(totalReceivedMessages / (int)(numberOfRecords - zeroValuesReceiversCount));
+    statistic.setQueueThroughputMessagesIn(totalReceivedMessages / (int)(numberOfRecords - zeroValuesReceiversCount) / statistic.getQueues());
     statistic.setTotalThroughputTransferIn(statistic.getTotalThroughputMessagesIn() * statistic.getSize() / (1024 * 1024));
     statistic.setQueueThroughputTransferIn(statistic.getQueueThroughputMessagesIn() * statistic.getSize() / (1024 * 1024));
 
-    statistic.setTotalThroughputMessagesOut(totalSentMessages / numberOfRecords);
-    statistic.setQueueThroughputMessagesOut(totalSentMessages / numberOfRecords / statistic.getQueues());
+    statistic.setTotalThroughputMessagesOut(totalSentMessages / (int)(numberOfRecords - zeroValuesSendersCount));
+    statistic.setQueueThroughputMessagesOut(totalSentMessages / (int)(numberOfRecords - zeroValuesSendersCount) / statistic.getQueues());
     statistic.setTotalThroughputTransferOut(statistic.getTotalThroughputMessagesOut() * statistic.getSize() / (1024 * 1024));
     statistic.setQueueThroughputTransferOut(statistic.getQueueThroughputMessagesOut() * statistic.getSize() / (1024 * 1024));
   }
@@ -93,12 +130,12 @@ public class StatisticsTools {
       String line;
       int counter = 0;
       while ((line = br.readLine()) != null) {
-        if (counter > 2) { //pomijamy nagłówek i statystyki z pierwszych 10 sekund (warm up)
+        if (counter > 0) { //pomijamy nagłówek
           List<String> valuesStr = Arrays.asList(line.split(","));
           List<Integer> values = valuesStr.stream()
                                           .map(Integer::parseInt)
                                           .collect(Collectors.toList());
-          values.remove(0);
+          values.remove(0); //usuwamy wskaźnik czasu
           records.add(values);
         }
         counter ++;
@@ -112,17 +149,56 @@ public class StatisticsTools {
     String fileName = df.format(new Date()) + "-FullStats.csv";
     FileWriter out = new FileWriter(fileName);
 
-    out.write("broker,message_size,queues/topics,producers,consumers,total_throughput_messages_in," +
-                  "queue/topic_throughput_messages_in,total_throughput_transfer_in,queue/topic_throughput_transfer_out," +
-                  "total_throughput_messages_out,queue/topic_throughput_messages_out,total_throughput_transfer_out," +
-                  "queue/topic_throughput_transfer_out\n");
+    out.write(
+      "Broker,Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów," +
+      "Liczba odebranych wiadomości łącznie,Liczba odebranych wiadomości per kolejka," +
+      "Rozmiar odebranych wiadomości łącznie,Rozmiar odebranych wiadomości per kolejka," +
+      "Liczba wysłanych wiadomości łącznie,Liczba wysłanych wiadomości per kolejka," +
+      "Rozmiar wysłanych wiadomości łącznie,Rozmiar wysłanych wiadomości per kolejka\n"
+    );
 
     for (Statistic s : stats) {
       out.write(s.getBroker().name() + "," + s.getSize() + "," + s.getQueues() + "," + s.getProducers() + "," +
-                    s.getConsumers() + "," + s.getTotalThroughputMessagesIn() + "," + s.getQueueThroughputMessagesIn() + "," +
-                    s.getTotalThroughputTransferIn() + "," + s.getQueueThroughputTransferIn() + "," +
-                    s.getTotalThroughputMessagesOut() + "," + s.getQueueThroughputMessagesOut() + "," +
-                    s.getTotalThroughputTransferOut() + "," + s.getQueueThroughputTransferOut() + "\n");
+                s.getConsumers() + "," + s.getTotalThroughputMessagesIn() + "," + s.getQueueThroughputMessagesIn() + "," +
+                s.getTotalThroughputTransferIn() + "," + s.getQueueThroughputTransferIn() + "," +
+                s.getTotalThroughputMessagesOut() + "," + s.getQueueThroughputMessagesOut() + "," +
+                s.getTotalThroughputTransferOut() + "," + s.getQueueThroughputTransferOut() + "\n");
+    }
+
+    out.close();
+  }
+
+  private static void saveFullStatsPaired(List<Map<Broker, Statistic>> stats) throws IOException {
+    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd-HHmmss");
+    String fileName = df.format(new Date()) + "-FullStatsPaired.csv";
+    OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(fileName), StandardCharsets.UTF_8);
+    //FileWriter out = new FileWriter(fileName);
+
+    out.write(
+      "Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów," +
+      "(KAFKA) Liczba odebranych wiadomości łącznie,(KAFKA) Liczba odebranych wiadomości per kolejka," +
+      "(KAFKA) Rozmiar odebranych wiadomości łącznie,(KAFKA) Rozmiar odebranych wiadomości per kolejka," +
+      "(KAFKA) Liczba wysłanych wiadomości łącznie,(KAFKA) Liczba wysłanych wiadomości per kolejka," +
+      "(KAFKA) Rozmiar wysłanych wiadomości łącznie,(KAFKA) Rozmiar wysłanych wiadomości per kolejka," +
+      "(RABBITMQ) Liczba odebranych wiadomości łącznie,(RABBITMQ) Liczba odebranych wiadomości per kolejka," +
+      "(RABBITMQ) Rozmiar odebranych wiadomości łącznie,(RABBITMQ) Rozmiar odebranych wiadomości per kolejka," +
+      "(RABBITMQ) Liczba wysłanych wiadomości łącznie,(RABBITMQ) Liczba wysłanych wiadomości per kolejka," +
+      "(RABBITMQ) Rozmiar wysłanych wiadomości łącznie,(RABBITMQ) Rozmiar wysłanych wiadomości per kolejka\n"
+    );
+
+    for (Map<Broker, Statistic> pairedStats : stats) {
+      Statistic sk = pairedStats.get(Broker.KAFKA);
+      Statistic sr = pairedStats.get(Broker.RABBITMQ);
+      out.write(
+        sk.getSize() + "," + sk.getQueues() + "," + sk.getProducers() + "," + sk.getConsumers() + "," +
+        sk.getTotalThroughputMessagesIn() + "," + sk.getQueueThroughputMessagesIn() + "," +
+        sk.getTotalThroughputTransferIn() + "," + sk.getQueueThroughputTransferIn() + "," +
+        sk.getTotalThroughputMessagesOut() + "," + sk.getQueueThroughputMessagesOut() + "," +
+        sk.getTotalThroughputTransferOut() + "," + sk.getQueueThroughputTransferOut() + "," +
+        sr.getTotalThroughputMessagesIn() + "," + sr.getQueueThroughputMessagesIn() + "," +
+        sr.getTotalThroughputTransferIn() + "," + sr.getQueueThroughputTransferIn() + "," +
+        sr.getTotalThroughputMessagesOut() + "," + sr.getQueueThroughputMessagesOut() + "," +
+        sr.getTotalThroughputTransferOut() + "," + sr.getQueueThroughputTransferOut() + "\n");
     }
 
     out.close();

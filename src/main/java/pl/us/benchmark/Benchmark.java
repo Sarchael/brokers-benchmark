@@ -31,7 +31,7 @@ public class Benchmark {
   public void start() {
     if (Boolean.TRUE.equals(benchmarkParameters.getStatisticsTool())) {
       try {
-        StatisticsTools.generateFullStats();
+        StatisticsTools.generateFullStats(benchmarkParameters.getPairResults());
       } catch (IOException exc) {
         exc.printStackTrace();
       }

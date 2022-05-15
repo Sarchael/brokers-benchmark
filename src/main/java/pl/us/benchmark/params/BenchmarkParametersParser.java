@@ -27,7 +27,8 @@ public class BenchmarkParametersParser {
       case "-s", "--size" -> params.setMessageSize(Integer.parseInt(value));
       case "-t", "--time" -> params.setBenchmarkDuration(Integer.parseInt(value));
       case "-st", "--statistics-tool" -> params.setStatisticsTool(Boolean.parseBoolean(value));
-      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -l, -q, -p, -c, -s, -t, -st");
+      case "-pr", "--pair-results" -> params.setPairResults(Boolean.parseBoolean(value));
+      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -l, -q, -p, -c, -s, -t, -st, -pr");
     }
   }
 
@@ -55,12 +56,14 @@ public class BenchmarkParametersParser {
     if (params.getMessageSize() == null)
       throw new IllegalArgumentException("Message size has to be specified!");
 
-    if (params.getNumberOfProducers() < params.getNumberOfQueues() ||
-        params.getNumberOfProducers() % params.getNumberOfQueues() != 0)
+    if (params.getNumberOfProducers() != null &&
+        (params.getNumberOfProducers() < params.getNumberOfQueues() ||
+         params.getNumberOfProducers() % params.getNumberOfQueues() != 0))
       throw new IllegalArgumentException("Number of producers must be a multiple of number of queues!");
 
-    if (params.getNumberOfConsumers() < params.getNumberOfQueues() ||
-        params.getNumberOfConsumers() % params.getNumberOfQueues() != 0)
+    if (params.getNumberOfConsumers() != null &&
+        (params.getNumberOfConsumers() < params.getNumberOfQueues() ||
+         params.getNumberOfConsumers() % params.getNumberOfQueues() != 0))
       throw new IllegalArgumentException("Number of consumers must be a multiple of number of queues!");
   }
 }
