@@ -36,10 +36,8 @@ public class ApacheKafkaTimeoutWorker extends TimerTask {
       List<Long> producersStats = statisticsWorker.getProducersStats();
       statisticsWorker.cancel();
 
-      for (ApacheKafkaWorker worker : producers)
-        worker.stopWorker();
-      for (ApacheKafkaWorker worker : consumers)
-        worker.stopWorker();
+      producers.forEach(ApacheKafkaWorker::stopWorker);
+      consumers.forEach(ApacheKafkaWorker::stopWorker);
 
       Thread.sleep(5000);
 

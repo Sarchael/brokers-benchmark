@@ -36,6 +36,10 @@ public class Benchmark {
         exc.printStackTrace();
       }
     } else {
+      if (benchmarkParameters.getNumberOfMessages() != null && benchmarkParameters.getPackageSize() != null)
+        MessagePool.getInstance()
+                   .setParams(benchmarkParameters.getNumberOfMessages(),
+                              benchmarkParameters.getPackageSize());
       switch (benchmarkParameters.getBroker()) {
         case RABBITMQ -> startRabbitBenchmark();
         case KAFKA -> startKafkaBenchmark();
@@ -51,6 +55,8 @@ public class Benchmark {
     runRabbitStatsProvider();
     if (benchmarkParameters.getBenchmarkDuration() != null)
       runRabbitTimeoutTimer();
+    else
+      waitAndSaveRabbitStats();
   }
 
   public void startKafkaBenchmark() {
@@ -61,6 +67,8 @@ public class Benchmark {
     runKafkaStatsProvider();
     if (benchmarkParameters.getBenchmarkDuration() != null)
       runKafkaTimeoutTimer();
+    else
+      waitAndSaveKafkaStats();
   }
 
   private void runKafkaTimeoutTimer() {
@@ -95,7 +103,9 @@ public class Benchmark {
     for (int i = 0; i < benchmarkParameters.getNumberOfConsumers(); i++) {
       kafkaConsumerThreads.add(new ApacheKafkaConsumer(i + 1,
                                                        topicNumber + 1,
-                                                       Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost())));
+                                                       Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost()),
+                                                       Optional.ofNullable(benchmarkParameters.getPrefetchCount()),
+                                                       benchmarkParameters.getNumberOfMessages() == null));
       if (++topicNumber >= benchmarkParameters.getNumberOfQueues())
         topicNumber = 0;
     }
@@ -107,7 +117,8 @@ public class Benchmark {
       kafkaProducerThreads.add(new ApacheKafkaProducer(i + 1,
                                                        topicNumber + 1,
                                                        prepareMessage(benchmarkParameters.getMessageSize()),
-                                                       Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost())));
+                                                       Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost()),
+                                                       benchmarkParameters.getNumberOfMessages() == null));
       if (++topicNumber >= benchmarkParameters.getNumberOfQueues())
         topicNumber = 0;
     }
@@ -136,7 +147,8 @@ public class Benchmark {
       rabbitProducerThreads.add(new RabbitProducer(i + 1,
                                                    queueNumber + 1,
                                                    prepareMessage(benchmarkParameters.getMessageSize()),
-                                                   Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost())));
+                                                   Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost()),
+                                                   benchmarkParameters.getNumberOfMessages() == null));
       if (++queueNumber >= benchmarkParameters.getNumberOfQueues())
         queueNumber = 0;
     }
@@ -147,7 +159,9 @@ public class Benchmark {
     for (int i = 0; i < benchmarkParameters.getNumberOfConsumers(); i++) {
       rabbitConsumerThreads.add(new RabbitConsumer(i + 1,
                                                    queueNumber + 1,
-                                                   Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost())));
+                                                   Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost()),
+                                                   Optional.ofNullable(benchmarkParameters.getPrefetchCount()),
+                                                   benchmarkParameters.getNumberOfMessages() == null));
       if (++queueNumber >= benchmarkParameters.getNumberOfQueues())
         queueNumber = 0;
     }
@@ -167,5 +181,45 @@ public class Benchmark {
     char[] chars = new char[messageSize];
     Arrays.fill(chars, 'x');
     return new String(chars);
+  }
+
+  private void waitAndSaveRabbitStats() {
+    try {
+      if (rabbitProducerThreads != null && !rabbitProducerThreads.isEmpty())
+        for (RabbitWorker rabbitWorker : rabbitProducerThreads)
+          rabbitWorker.join();
+
+      if (rabbitConsumerThreads != null && !rabbitConsumerThreads.isEmpty())
+        for (RabbitWorker rabbitWorker : rabbitConsumerThreads)
+          rabbitWorker.join();
+
+      List<Long> consumersStats = rabbitStatisticsWorkerThread.getConsumersStats();
+      List<Long> producersStats = rabbitStatisticsWorkerThread.getProducersStats();
+      rabbitStatisticsWorkerThread.cancel();
+
+      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
+    } catch (InterruptedException | IOException e) {
+      logger.severe(e.getMessage());
+    }
+  }
+
+  private void waitAndSaveKafkaStats() {
+    try {
+      if (kafkaProducerThreads != null && !kafkaProducerThreads.isEmpty())
+        for (ApacheKafkaWorker kafkaWorker : kafkaProducerThreads)
+          kafkaWorker.join();
+
+      if (kafkaConsumerThreads != null && !kafkaConsumerThreads.isEmpty())
+        for (ApacheKafkaWorker kafkaWorker : kafkaConsumerThreads)
+          kafkaWorker.join();
+
+      List<Long> consumersStats = kafkaStatisticsWorkerThread.getConsumersStats();
+      List<Long> producersStats = kafkaStatisticsWorkerThread.getProducersStats();
+      kafkaStatisticsWorkerThread.cancel();
+
+      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
+    } catch (InterruptedException | IOException e) {
+      logger.severe(e.getMessage());
+    }
   }
 }

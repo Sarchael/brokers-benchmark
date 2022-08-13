@@ -48,7 +48,7 @@ public class StatisticsTools {
           for (Statistic pair : statistics) {
             if (pair.getBroker() == Broker.RABBITMQ && statistic.getSize().equals(pair.getSize()) &&
                 statistic.getQueues().equals(pair.getQueues()) && statistic.getConsumers().equals(pair.getConsumers()) &&
-                statistic.getProducers().equals(pair.getProducers())) {
+                statistic.getProducers().equals(pair.getProducers()) && statistic.getPrefetchCount().equals(pair.getPrefetchCount())) {
               Map<Broker, Statistic> pairedStats = new HashMap<>();
               pairedStats.put(statistic.getBroker(), statistic);
               pairedStats.put(pair.getBroker(), pair);
@@ -79,6 +79,7 @@ public class StatisticsTools {
         case 'Q' -> statistic.setQueues(Integer.parseInt(x.substring(1)));
         case 'P' -> statistic.setProducers(Integer.parseInt(x.substring(1)));
         case 'C' -> statistic.setConsumers(Integer.parseInt(x.substring(1)));
+        case 'F' -> statistic.setPrefetchCount(Integer.parseInt(x.substring(1)));
         default -> statistic.setBroker(Broker.getByName(x));
       }
     });
@@ -100,14 +101,16 @@ public class StatisticsTools {
                                          .filter(x -> x == 0)
                                          .count();
     Integer numberOfRecords = results.size();
+    Integer nonZeroValuesReceiversCount = (int)(numberOfRecords - zeroValuesReceiversCount);
+    Integer nonZeroValuesSendersCount = (int)(numberOfRecords - zeroValuesSendersCount);
 
-    statistic.setTotalThroughputMessagesIn(totalReceivedMessages / (int)(numberOfRecords - zeroValuesReceiversCount));
-    statistic.setQueueThroughputMessagesIn(totalReceivedMessages / (int)(numberOfRecords - zeroValuesReceiversCount) / statistic.getQueues());
+    statistic.setTotalThroughputMessagesIn(totalReceivedMessages / (nonZeroValuesReceiversCount > 0 ? nonZeroValuesReceiversCount : 1));
+    statistic.setQueueThroughputMessagesIn(totalReceivedMessages / (nonZeroValuesReceiversCount > 0 ? nonZeroValuesReceiversCount : 1) / statistic.getQueues());
     statistic.setTotalThroughputTransferIn(statistic.getTotalThroughputMessagesIn() * statistic.getSize() / (1024 * 1024));
     statistic.setQueueThroughputTransferIn(statistic.getQueueThroughputMessagesIn() * statistic.getSize() / (1024 * 1024));
 
-    statistic.setTotalThroughputMessagesOut(totalSentMessages / (int)(numberOfRecords - zeroValuesSendersCount));
-    statistic.setQueueThroughputMessagesOut(totalSentMessages / (int)(numberOfRecords - zeroValuesSendersCount) / statistic.getQueues());
+    statistic.setTotalThroughputMessagesOut(totalSentMessages / (nonZeroValuesSendersCount > 0 ? nonZeroValuesSendersCount : 1));
+    statistic.setQueueThroughputMessagesOut(totalSentMessages / (nonZeroValuesSendersCount > 0 ? nonZeroValuesSendersCount : 1) / statistic.getQueues());
     statistic.setTotalThroughputTransferOut(statistic.getTotalThroughputMessagesOut() * statistic.getSize() / (1024 * 1024));
     statistic.setQueueThroughputTransferOut(statistic.getQueueThroughputMessagesOut() * statistic.getSize() / (1024 * 1024));
   }
@@ -118,8 +121,9 @@ public class StatisticsTools {
     fileName += "-" + benchmarkParameters.getBroker().name().toLowerCase();
     fileName += "-S" + benchmarkParameters.getMessageSize();
     fileName += "-Q" + benchmarkParameters.getNumberOfQueues();
-    fileName += "-P" + benchmarkParameters.getNumberOfProducers();
-    fileName += "-C" + benchmarkParameters.getNumberOfConsumers();
+    fileName += "-P" + (benchmarkParameters.getNumberOfProducers() != null ? benchmarkParameters.getNumberOfProducers() : 0);
+    fileName += "-C" + (benchmarkParameters.getNumberOfConsumers() != null ? benchmarkParameters.getNumberOfConsumers() : 0);
+    fileName += "-F" + (benchmarkParameters.getPrefetchCount() != null ? benchmarkParameters.getPrefetchCount() : 0);
     fileName += ".csv";
     return fileName;
   }
@@ -150,7 +154,7 @@ public class StatisticsTools {
     FileWriter out = new FileWriter(fileName);
 
     out.write(
-      "Broker,Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów," +
+      "Broker,Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów,Prefetch count," +
       "Liczba odebranych wiadomości łącznie,Liczba odebranych wiadomości per kolejka," +
       "Rozmiar odebranych wiadomości łącznie,Rozmiar odebranych wiadomości per kolejka," +
       "Liczba wysłanych wiadomości łącznie,Liczba wysłanych wiadomości per kolejka," +
@@ -159,7 +163,7 @@ public class StatisticsTools {
 
     for (Statistic s : stats) {
       out.write(s.getBroker().name() + "," + s.getSize() + "," + s.getQueues() + "," + s.getProducers() + "," +
-                s.getConsumers() + "," + s.getTotalThroughputMessagesIn() + "," + s.getQueueThroughputMessagesIn() + "," +
+                s.getConsumers() + "," + s.getPrefetchCount() + "," + s.getTotalThroughputMessagesIn() + "," + s.getQueueThroughputMessagesIn() + "," +
                 s.getTotalThroughputTransferIn() + "," + s.getQueueThroughputTransferIn() + "," +
                 s.getTotalThroughputMessagesOut() + "," + s.getQueueThroughputMessagesOut() + "," +
                 s.getTotalThroughputTransferOut() + "," + s.getQueueThroughputTransferOut() + "\n");
@@ -175,7 +179,7 @@ public class StatisticsTools {
     //FileWriter out = new FileWriter(fileName);
 
     out.write(
-      "Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów," +
+      "Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów,Prefetch count," +
       "(KAFKA) Liczba odebranych wiadomości łącznie,(KAFKA) Liczba odebranych wiadomości per kolejka," +
       "(KAFKA) Rozmiar odebranych wiadomości łącznie,(KAFKA) Rozmiar odebranych wiadomości per kolejka," +
       "(KAFKA) Liczba wysłanych wiadomości łącznie,(KAFKA) Liczba wysłanych wiadomości per kolejka," +
@@ -190,7 +194,7 @@ public class StatisticsTools {
       Statistic sk = pairedStats.get(Broker.KAFKA);
       Statistic sr = pairedStats.get(Broker.RABBITMQ);
       out.write(
-        sk.getSize() + "," + sk.getQueues() + "," + sk.getProducers() + "," + sk.getConsumers() + "," +
+        sk.getSize() + "," + sk.getQueues() + "," + sk.getProducers() + "," + sk.getConsumers() + "," + sk.getPrefetchCount() + "," +
         sk.getTotalThroughputMessagesIn() + "," + sk.getQueueThroughputMessagesIn() + "," +
         sk.getTotalThroughputTransferIn() + "," + sk.getQueueThroughputTransferIn() + "," +
         sk.getTotalThroughputMessagesOut() + "," + sk.getQueueThroughputMessagesOut() + "," +

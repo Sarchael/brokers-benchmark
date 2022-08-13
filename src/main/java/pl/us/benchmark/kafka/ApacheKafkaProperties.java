@@ -1,5 +1,6 @@
 package pl.us.benchmark.kafka;
 
+import java.util.Optional;
 import java.util.Properties;
 
 public class ApacheKafkaProperties {
@@ -27,17 +28,19 @@ public class ApacheKafkaProperties {
   }
 
   public static Properties getProducerPropsRemote() {
-    producerProps.put("bootstrap.servers", "192.168.1.31:9093");
+    producerProps.put("bootstrap.servers", "192.168.0.31:9093");
     return producerProps;
   }
 
-  public static Properties getConsumerPropsLocal() {
+  public static Properties getConsumerPropsLocal(Optional<Integer> prefetchCount) {
     consumerProps.put("bootstrap.servers", "localhost:9093");
+    prefetchCount.ifPresent(x -> consumerProps.put("consumer.max.poll.records", x));
     return consumerProps;
   }
 
-  public static Properties getConsumerPropsRemote() {
-    consumerProps.put("bootstrap.servers", "192.168.1.31:9093");
+  public static Properties getConsumerPropsRemote(Optional<Integer> prefetchCount) {
+    consumerProps.put("bootstrap.servers", "192.168.0.31:9093");
+    prefetchCount.ifPresent(x -> consumerProps.put("consumer.max.poll.records", x));
     return consumerProps;
   }
 }

@@ -10,6 +10,9 @@ public class BenchmarkParameters {
   private Integer numberOfQueues;
   private Integer messageSize;
   private Integer benchmarkDuration;
+  private Integer numberOfMessages;
+  private Integer packageSize;
+  private Integer prefetchCount;
   private Boolean statisticsTool;
   private Boolean pairResults;
 
@@ -67,6 +70,30 @@ public class BenchmarkParameters {
 
   public void setBenchmarkDuration(Integer benchmarkDuration) {
     this.benchmarkDuration = benchmarkDuration;
+  }
+
+  public Integer getNumberOfMessages() {
+    return numberOfMessages;
+  }
+
+  public void setNumberOfMessages(Integer numberOfMessages) {
+    this.numberOfMessages = numberOfMessages;
+  }
+
+  public Integer getPackageSize() {
+    return packageSize;
+  }
+
+  public void setPackageSize(Integer packageSize) {
+    this.packageSize = packageSize;
+  }
+
+  public Integer getPrefetchCount() {
+    return prefetchCount;
+  }
+
+  public void setPrefetchCount(Integer prefetchCount) {
+    this.prefetchCount = prefetchCount;
   }
 
   public Boolean getStatisticsTool() {

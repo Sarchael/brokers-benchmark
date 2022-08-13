@@ -2,6 +2,7 @@ package pl.us.benchmark.rabbitmq;
 
 import com.rabbitmq.client.Channel;
 import pl.us.benchmark.BenchmarkWorkerType;
+import pl.us.benchmark.MessagePool;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -17,6 +18,9 @@ public abstract class RabbitWorker extends Thread {
   protected String QUEUE_NAME;
   protected String THREAD_NAME;
 
+  protected Integer numberOfMessages;
+  protected MessagePool messagePool;
+  protected boolean timeMode;
   protected BenchmarkWorkerType type;
   protected Integer workerNumber;
   protected AtomicLong processedMessages;
@@ -28,7 +32,8 @@ public abstract class RabbitWorker extends Thread {
 
   public abstract void doWork() throws IOException;
 
-  public RabbitWorker(BenchmarkWorkerType type, int workerNumber, int queueNumber, boolean brokerOnLocalhost) {
+  public RabbitWorker(BenchmarkWorkerType type, int workerNumber, int queueNumber,
+                      boolean brokerOnLocalhost, boolean timeMode) {
     this.QUEUE_NAME = QUEUE_NAME_PREFIX + queueNumber;
     this.workerNumber = workerNumber;
     this.type = type;
@@ -36,6 +41,10 @@ public abstract class RabbitWorker extends Thread {
 
     this.processedMessages = new AtomicLong(0);
     this.run = new AtomicBoolean(true);
+
+    this.timeMode = timeMode;
+    this.messagePool = MessagePool.getInstance();
+    this.numberOfMessages = 0;
   }
 
   @Override

@@ -26,9 +26,15 @@ public class BenchmarkParametersParser {
       case "-c", "--consumers" -> params.setNumberOfConsumers(Integer.parseInt(value));
       case "-s", "--size" -> params.setMessageSize(Integer.parseInt(value));
       case "-t", "--time" -> params.setBenchmarkDuration(Integer.parseInt(value));
+      case "-f", "--prefetch-count" -> params.setPrefetchCount(Integer.parseInt(value));
+      case "-n", "--number-of-messages" -> params.setNumberOfMessages(Integer.parseInt(value));
+      case "-m", "--messages-in-package" -> params.setPackageSize(Integer.parseInt(value));
       case "-st", "--statistics-tool" -> params.setStatisticsTool(Boolean.parseBoolean(value));
       case "-pr", "--pair-results" -> params.setPairResults(Boolean.parseBoolean(value));
-      default -> throw new IllegalArgumentException("Unknown parameter \"" + key + "\". Available parameters are: -b, -l, -q, -p, -c, -s, -t, -st, -pr");
+      default -> throw new IllegalArgumentException(
+        "Unknown parameter \"" + key + "\". " +
+        "Available parameters are: -b, -l, -q, -p, -c, -s, -t, -f, -n, -m, -st, -pr"
+      );
     }
   }
 
@@ -47,8 +53,11 @@ public class BenchmarkParametersParser {
     if (params.getNumberOfQueues() == null)
       throw new IllegalArgumentException("Number of queues has to be specified!");
 
-    if (params.getBenchmarkDuration() == null)
-      throw new IllegalArgumentException("Benchmark duration has to be specified!");
+    if (params.getBenchmarkDuration() == null && params.getNumberOfMessages() == null)
+      throw new IllegalArgumentException("Benchmark duration or number of messages has to be specified!");
+
+    if (params.getBenchmarkDuration() != null && params.getNumberOfMessages() != null)
+      throw new IllegalArgumentException("Benchmark duration and number of messages cannot be both specified!");
 
     if (params.getBroker() == null)
       throw new IllegalArgumentException("Broker has to be specified!");
@@ -65,5 +74,9 @@ public class BenchmarkParametersParser {
         (params.getNumberOfConsumers() < params.getNumberOfQueues() ||
          params.getNumberOfConsumers() % params.getNumberOfQueues() != 0))
       throw new IllegalArgumentException("Number of consumers must be a multiple of number of queues!");
+
+    if (params.getNumberOfMessages() != null && params.getPackageSize() == null ||
+        params.getPackageSize() != null && params.getNumberOfMessages() == null)
+      throw new IllegalArgumentException("In message-count mode, both number of messages and package size has to be specified!");
   }
 }

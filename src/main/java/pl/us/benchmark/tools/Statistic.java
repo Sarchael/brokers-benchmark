@@ -9,6 +9,7 @@ public class Statistic {
   private Integer queues;
   private Integer producers;
   private Integer consumers;
+  private Integer prefetchCount;
   private Integer totalThroughputMessagesIn;
   private Integer queueThroughputMessagesIn;
   private Integer totalThroughputTransferIn;
@@ -64,6 +65,14 @@ public class Statistic {
 
   public void setConsumers(Integer consumers) {
     this.consumers = consumers;
+  }
+
+  public Integer getPrefetchCount() {
+    return prefetchCount;
+  }
+
+  public void setPrefetchCount(Integer prefetchCount) {
+    this.prefetchCount = prefetchCount;
   }
 
   public Integer getTotalThroughputMessagesIn() {

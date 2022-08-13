@@ -1,7 +1,10 @@
 package pl.us.benchmark.kafka;
 
 import pl.us.benchmark.BenchmarkWorkerType;
+import pl.us.benchmark.MessagePool;
 
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
@@ -14,6 +17,9 @@ public abstract class ApacheKafkaWorker extends Thread {
   protected String TOPIC_NAME;
   protected String THREAD_NAME;
 
+  protected Integer numberOfMessages;
+  protected MessagePool messagePool;
+  protected boolean timeMode;
   protected BenchmarkWorkerType type;
   protected Integer workerNumber;
   protected AtomicLong processedMessages;
@@ -22,7 +28,8 @@ public abstract class ApacheKafkaWorker extends Thread {
 
   public abstract void doWork();
 
-  public ApacheKafkaWorker(BenchmarkWorkerType type, int workerNumber, int topicNumber, boolean brokerOnLocalhost) {
+  public ApacheKafkaWorker(BenchmarkWorkerType type, int workerNumber, int topicNumber,
+                           boolean brokerOnLocalhost, boolean timeMode) {
     this.TOPIC_NAME = TOPIC_NAME_PREFIX + topicNumber;
     this.workerNumber = workerNumber;
     this.type = type;
@@ -30,6 +37,10 @@ public abstract class ApacheKafkaWorker extends Thread {
 
     this.processedMessages = new AtomicLong(0);
     this.run = new AtomicBoolean(true);
+
+    this.timeMode = timeMode;
+    this.messagePool = MessagePool.getInstance();
+    this.numberOfMessages = 0;
   }
 
   @Override
