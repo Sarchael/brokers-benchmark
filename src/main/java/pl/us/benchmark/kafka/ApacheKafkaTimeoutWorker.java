@@ -44,8 +44,6 @@ public class ApacheKafkaTimeoutWorker extends TimerTask {
       StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
     } catch (Exception e) {
       e.printStackTrace();
-    } finally {
-      System.exit(0);
     }
   }
 }

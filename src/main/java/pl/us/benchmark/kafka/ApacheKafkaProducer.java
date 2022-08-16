@@ -21,27 +21,34 @@ public class ApacheKafkaProducer extends ApacheKafkaWorker {
     producer = new KafkaProducer<>(brokerOnLocalhost ? ApacheKafkaProperties.getProducerPropsLocal()
                                                      : ApacheKafkaProperties.getProducerPropsRemote());
 
-    logger.info(THREAD_NAME + ": Connection initialized");
-    logger.info(THREAD_NAME + ": Messages are sending");
-
     if (timeMode)
-      while (run.get()) {
-        producer.send(new ProducerRecord<>(TOPIC_NAME, "benchmark", MESSAGE));
-        processedMessages.incrementAndGet();
-      }
+      runInTimeMode();
     else
-      while (run.get()) {
-        if (numberOfMessages == 0) {
-          Optional<Integer> pack = messagePool.getPackage();
-          if (pack.isPresent())
-            numberOfMessages = pack.get();
-          else
-            break;
-        }
-        producer.send(new ProducerRecord<>(TOPIC_NAME, "benchmark", MESSAGE));
-        processedMessages.incrementAndGet();
-        numberOfMessages--;
+      runInMessageCountMode();
+  }
+
+  private void runInTimeMode() {
+    while (run.get()) {
+      producer.send(new ProducerRecord<>(TOPIC_NAME, null, MESSAGE));
+      processedMessages.incrementAndGet();
+    }
+    producer.flush();
+  }
+
+  private void runInMessageCountMode() {
+    while (true) {
+      if (numberOfMessages == 0) {
+        Optional<Integer> pack = messagePool.getPackage();
+        if (pack.isPresent())
+          numberOfMessages = pack.get();
+        else
+          break;
       }
+      producer.send(new ProducerRecord<>(TOPIC_NAME, null, MESSAGE));
+      processedMessages.incrementAndGet();
+      numberOfMessages--;
+    }
+    producer.flush();
     run.set(false);
   }
 }

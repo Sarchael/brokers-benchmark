@@ -1,0 +1,28 @@
+version: "3.7"
+services:
+  rabbitmq:
+    hostname: rabbitmq
+    container_name: rabbitmq
+    image: "rabbitmq:3.9.8-management"
+    ports:
+      - "4369:4369"
+      - "5671:5671"
+      - "5672:5672"
+      - "15672:15672"
+      - "15692:15692"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbitservice
+      - RABBITMQ_DEFAULT_PASS=rabbitservice
+    volumes:
+      - /usr/local/dockervolumes/rabbitmq:/etc/rabbitmq
+    networks:
+      - benchmark-dc-net
+    deploy:
+      resources:
+        limits:
+          cpus: "16"
+          memory: 16G
+networks:
+  benchmark-dc-net:
+    driver: bridge
+    name: "benchmark-dc-net"

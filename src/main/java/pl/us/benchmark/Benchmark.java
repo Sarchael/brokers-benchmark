@@ -8,10 +8,8 @@ import pl.us.benchmark.tools.StatisticsTools;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class Benchmark {
-  private static final Logger logger = Logger.getLogger(Benchmark.class.getCanonicalName());
 
   private BenchmarkParameters benchmarkParameters;
   private Timer statisticsWorkerTimer;
@@ -36,7 +34,7 @@ public class Benchmark {
         exc.printStackTrace();
       }
     } else {
-      if (benchmarkParameters.getNumberOfMessages() != null && benchmarkParameters.getPackageSize() != null)
+      if (benchmarkParameters.getNumberOfMessages() != null)
         MessagePool.getInstance()
                    .setParams(benchmarkParameters.getNumberOfMessages(),
                               benchmarkParameters.getPackageSize());
@@ -48,22 +46,32 @@ public class Benchmark {
   }
 
   public void startRabbitBenchmark() {
-    prepareRabbitProducerThreads();
-    prepareRabbitConsumerThreads();
-    runRabbitProducers();
-    runRabbitConsumers();
+    if (benchmarkParameters.getNumberOfProducers() != null)
+      prepareRabbitProducerThreads();
+    if (benchmarkParameters.getNumberOfConsumers() != null)
+      prepareRabbitConsumerThreads();
+    if (benchmarkParameters.getNumberOfProducers() != null)
+      runRabbitProducers();
+    if (benchmarkParameters.getNumberOfConsumers() != null)
+      runRabbitConsumers();
     runRabbitStatsProvider();
     if (benchmarkParameters.getBenchmarkDuration() != null)
       runRabbitTimeoutTimer();
+    else if (benchmarkParameters.getNumberOfConsumers() != null)
+      runRabbitOutOfMessagesTimer();
     else
       waitAndSaveRabbitStats();
   }
 
   public void startKafkaBenchmark() {
-    prepareKafkaProducerThreads();
-    prepareKafkaConsumerThreads();
-    runKafkaProducers();
-    runKafkaConsumers();
+    if (benchmarkParameters.getNumberOfProducers() != null)
+      prepareKafkaProducerThreads();
+    if (benchmarkParameters.getNumberOfConsumers() != null)
+      prepareKafkaConsumerThreads();
+    if (benchmarkParameters.getNumberOfProducers() != null)
+      runKafkaProducers();
+    if (benchmarkParameters.getNumberOfConsumers() != null)
+      runKafkaConsumers();
     runKafkaStatsProvider();
     if (benchmarkParameters.getBenchmarkDuration() != null)
       runKafkaTimeoutTimer();
@@ -90,13 +98,10 @@ public class Benchmark {
 
   private void runKafkaConsumers() {
     kafkaConsumerThreads.forEach(x -> new Thread(x, "Consumer-" + x.getWorkerNumber()).start());
-    logger.info("Consumers threads are running");
   }
 
   private void runKafkaProducers() {
-    kafkaProducerThreads.forEach(x -> new Thread(x, "Producer-" + x.getWorkerNumber()).start());
-    logger.info("Producers threads are running");
-  }
+    kafkaProducerThreads.forEach(x -> new Thread(x, "Producer-" + x.getWorkerNumber()).start()); }
 
   private void prepareKafkaConsumerThreads() {
     int topicNumber = 0;
@@ -104,7 +109,6 @@ public class Benchmark {
       kafkaConsumerThreads.add(new ApacheKafkaConsumer(i + 1,
                                                        topicNumber + 1,
                                                        Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost()),
-                                                       Optional.ofNullable(benchmarkParameters.getPrefetchCount()),
                                                        benchmarkParameters.getNumberOfMessages() == null));
       if (++topicNumber >= benchmarkParameters.getNumberOfQueues())
         topicNumber = 0;
@@ -131,6 +135,15 @@ public class Benchmark {
     Calendar calendar = Calendar.getInstance();
     calendar.add(Calendar.SECOND, benchmarkParameters.getBenchmarkDuration());
     timer.schedule(task, calendar.getTime());
+  }
+
+  private void runRabbitOutOfMessagesTimer() {
+    Timer timer = new Timer("OutOfMessages");
+    TimerTask task = new RabbitOutOfMessagesWorker(rabbitConsumerThreads, rabbitStatisticsWorkerThread,
+      statisticsWorkerTimer, timer, benchmarkParameters);
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.SECOND, 5);
+    timer.schedule(task, calendar.getTime(), 1000);
   }
 
   private void runRabbitStatsProvider() {
@@ -160,7 +173,6 @@ public class Benchmark {
       rabbitConsumerThreads.add(new RabbitConsumer(i + 1,
                                                    queueNumber + 1,
                                                    Optional.ofNullable(benchmarkParameters.getBrokerOnLocalhost()),
-                                                   Optional.ofNullable(benchmarkParameters.getPrefetchCount()),
                                                    benchmarkParameters.getNumberOfMessages() == null));
       if (++queueNumber >= benchmarkParameters.getNumberOfQueues())
         queueNumber = 0;
@@ -169,12 +181,10 @@ public class Benchmark {
 
   private void runRabbitProducers() {
     rabbitProducerThreads.forEach(x -> new Thread(x, "Producer-" + x.getWorkerNumber()).start());
-    logger.info("Producers threads are running");
   }
 
   private void runRabbitConsumers() {
     rabbitConsumerThreads.forEach(x -> new Thread(x, "Consumer-" + x.getWorkerNumber()).start());
-    logger.info("Consumers threads are running");
   }
 
   private String prepareMessage(Integer messageSize) {
@@ -185,41 +195,62 @@ public class Benchmark {
 
   private void waitAndSaveRabbitStats() {
     try {
-      if (rabbitProducerThreads != null && !rabbitProducerThreads.isEmpty())
-        for (RabbitWorker rabbitWorker : rabbitProducerThreads)
-          rabbitWorker.join();
+      if (rabbitProducerThreads != null && !rabbitProducerThreads.isEmpty()) {
+        boolean stop = false;
+        while (!stop) {
+          Thread.sleep(500);
+          stop = true;
+          for (RabbitWorker rabbitWorker : rabbitProducerThreads)
+            stop &= !rabbitWorker.isRunning();
+        }
+      }
 
-      if (rabbitConsumerThreads != null && !rabbitConsumerThreads.isEmpty())
-        for (RabbitWorker rabbitWorker : rabbitConsumerThreads)
-          rabbitWorker.join();
-
+      statisticsWorkerTimer.cancel();
+      Thread.sleep(1000);
       List<Long> consumersStats = rabbitStatisticsWorkerThread.getConsumersStats();
       List<Long> producersStats = rabbitStatisticsWorkerThread.getProducersStats();
       rabbitStatisticsWorkerThread.cancel();
 
+      Thread.sleep(5000);
+      RabbitConnectionFactory.getInstance().closeAllConnections();
+
       StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
     } catch (InterruptedException | IOException e) {
-      logger.severe(e.getMessage());
+      e.printStackTrace();
     }
   }
 
   private void waitAndSaveKafkaStats() {
     try {
-      if (kafkaProducerThreads != null && !kafkaProducerThreads.isEmpty())
-        for (ApacheKafkaWorker kafkaWorker : kafkaProducerThreads)
-          kafkaWorker.join();
+      if (kafkaProducerThreads != null && !kafkaProducerThreads.isEmpty()) {
+        boolean stop = false;
+        while (!stop) {
+          Thread.sleep(500);
+          stop = true;
+          for (ApacheKafkaWorker kafkaWorker : kafkaProducerThreads)
+            stop &= !kafkaWorker.isRunning();
+        }
+      }
 
-      if (kafkaConsumerThreads != null && !kafkaConsumerThreads.isEmpty())
-        for (ApacheKafkaWorker kafkaWorker : kafkaConsumerThreads)
-          kafkaWorker.join();
+      if (kafkaConsumerThreads != null && !kafkaConsumerThreads.isEmpty()) {
+        boolean stop = false;
+        while (!stop) {
+          Thread.sleep(500);
+          stop = true;
+          for (ApacheKafkaWorker kafkaWorker : kafkaConsumerThreads)
+            stop &= !kafkaWorker.isRunning();
+        }
+      }
 
+      statisticsWorkerTimer.cancel();
+      Thread.sleep(1000);
       List<Long> consumersStats = kafkaStatisticsWorkerThread.getConsumersStats();
       List<Long> producersStats = kafkaStatisticsWorkerThread.getProducersStats();
       kafkaStatisticsWorkerThread.cancel();
 
       StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
     } catch (InterruptedException | IOException e) {
-      logger.severe(e.getMessage());
+      e.printStackTrace();
     }
   }
 }

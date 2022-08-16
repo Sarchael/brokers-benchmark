@@ -26,4 +26,13 @@ public class MessagePool {
     messagePool -= packageSize;
     return messagePool >= 0 ? Optional.of(packageSize) : Optional.empty();
   }
+
+  public synchronized boolean registerPackage(int size) {
+    messagePool -= size;
+    return messagePool > 0;
+  }
+
+  public int getMessageCount() {
+    return messagePool;
+  }
 }

@@ -12,7 +12,6 @@ public class BenchmarkParameters {
   private Integer benchmarkDuration;
   private Integer numberOfMessages;
   private Integer packageSize;
-  private Integer prefetchCount;
   private Boolean statisticsTool;
   private Boolean pairResults;
 
@@ -86,14 +85,6 @@ public class BenchmarkParameters {
 
   public void setPackageSize(Integer packageSize) {
     this.packageSize = packageSize;
-  }
-
-  public Integer getPrefetchCount() {
-    return prefetchCount;
-  }
-
-  public void setPrefetchCount(Integer prefetchCount) {
-    this.prefetchCount = prefetchCount;
   }
 
   public Boolean getStatisticsTool() {

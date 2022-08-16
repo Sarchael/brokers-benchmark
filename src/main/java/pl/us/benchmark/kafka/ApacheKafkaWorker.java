@@ -3,14 +3,10 @@ package pl.us.benchmark.kafka;
 import pl.us.benchmark.BenchmarkWorkerType;
 import pl.us.benchmark.MessagePool;
 
-import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Logger;
 
 public abstract class ApacheKafkaWorker extends Thread {
-  protected final Logger logger = Logger.getLogger(ApacheKafkaWorker.class.getCanonicalName());
 
   private final String TOPIC_NAME_PREFIX = "BENCHMARK_TOPIC_";
 
@@ -59,5 +55,9 @@ public abstract class ApacheKafkaWorker extends Thread {
 
   public Long getProcessedMessages() {
     return processedMessages.get();
+  }
+
+  public boolean isRunning() {
+    return run.get();
   }
 }

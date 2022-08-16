@@ -16,8 +16,6 @@ public class RabbitProducer extends RabbitWorker {
 
   @Override
   public void doWork() throws IOException {
-    logger.info(THREAD_NAME + ": Messages are sending");
-
     if (timeMode)
       while (run.get()) {
         channel.basicPublish("", QUEUE_NAME, null, MESSAGE.getBytes());
@@ -25,16 +23,16 @@ public class RabbitProducer extends RabbitWorker {
       }
     else
       while (run.get()) {
-        if (numberOfMessages <= 0) {
+        if (numberOfMessages.get() <= 0) {
           Optional<Integer> pack = messagePool.getPackage();
           if (pack.isPresent())
-            numberOfMessages += pack.get();
+            numberOfMessages.addAndGet(pack.get());
           else
             break;
         }
         channel.basicPublish("", QUEUE_NAME, null, MESSAGE.getBytes());
         processedMessages.incrementAndGet();
-        numberOfMessages--;
+        numberOfMessages.decrementAndGet();
       }
     run.set(false);
   }

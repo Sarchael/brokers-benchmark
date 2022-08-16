@@ -37,12 +37,7 @@ public class RabbitTimeoutWorker extends TimerTask {
       statisticsWorker.cancel();
 
       producers.forEach(RabbitWorker::stopWorker);
-      consumers.forEach(RabbitWorker::stopWorker);
-
-      for (RabbitWorker worker : producers)
-        worker.stopWorker();
-      for (RabbitWorker worker : consumers)
-        worker.stopWorker();
+      consumers.forEach(Thread::interrupt);
 
       Thread.sleep(5000);
       RabbitConnectionFactory.getInstance().closeAllConnections();

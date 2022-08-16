@@ -8,17 +8,15 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Logger;
 
 public abstract class RabbitWorker extends Thread {
-  protected final Logger logger = Logger.getLogger(RabbitWorker.class.getCanonicalName());
 
   private final String QUEUE_NAME_PREFIX = "BENCHMARK_QUEUE_";
 
   protected String QUEUE_NAME;
   protected String THREAD_NAME;
 
-  protected Integer numberOfMessages;
+  protected AtomicLong numberOfMessages;
   protected MessagePool messagePool;
   protected boolean timeMode;
   protected BenchmarkWorkerType type;
@@ -44,7 +42,7 @@ public abstract class RabbitWorker extends Thread {
 
     this.timeMode = timeMode;
     this.messagePool = MessagePool.getInstance();
-    this.numberOfMessages = 0;
+    this.numberOfMessages = new AtomicLong(0);
   }
 
   @Override
@@ -55,18 +53,16 @@ public abstract class RabbitWorker extends Thread {
                                        .createChannel(QUEUE_NAME,
                                                       workerNumber.toString(),
                                                       brokerOnLocalhost);
-      logger.info(THREAD_NAME + ": Connection initialized");
       doWork();
       if (type == BenchmarkWorkerType.PRODUCER)
         closeConnection();
     } catch (IOException | TimeoutException e) {
-      logger.severe(e.getMessage());
+      e.printStackTrace();
     }
   }
 
   public void closeConnection() throws IOException, TimeoutException {
     RabbitConnectionFactory.getInstance().closeConnection(channel);
-    logger.info(THREAD_NAME + ": Connection closed");
   }
 
   public void stopWorker() {
@@ -79,5 +75,9 @@ public abstract class RabbitWorker extends Thread {
 
   public Long getProcessedMessages() {
     return processedMessages.get();
+  }
+
+  public boolean isRunning() {
+    return run.get();
   }
 }

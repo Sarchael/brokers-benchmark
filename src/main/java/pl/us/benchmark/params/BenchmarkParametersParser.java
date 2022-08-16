@@ -26,14 +26,13 @@ public class BenchmarkParametersParser {
       case "-c", "--consumers" -> params.setNumberOfConsumers(Integer.parseInt(value));
       case "-s", "--size" -> params.setMessageSize(Integer.parseInt(value));
       case "-t", "--time" -> params.setBenchmarkDuration(Integer.parseInt(value));
-      case "-f", "--prefetch-count" -> params.setPrefetchCount(Integer.parseInt(value));
       case "-n", "--number-of-messages" -> params.setNumberOfMessages(Integer.parseInt(value));
       case "-m", "--messages-in-package" -> params.setPackageSize(Integer.parseInt(value));
       case "-st", "--statistics-tool" -> params.setStatisticsTool(Boolean.parseBoolean(value));
       case "-pr", "--pair-results" -> params.setPairResults(Boolean.parseBoolean(value));
       default -> throw new IllegalArgumentException(
         "Unknown parameter \"" + key + "\". " +
-        "Available parameters are: -b, -l, -q, -p, -c, -s, -t, -f, -n, -m, -st, -pr"
+        "Available parameters are: -b, -l, -q, -p, -c, -s, -t, -n, -m, -st, -pr"
       );
     }
   }
@@ -75,8 +74,17 @@ public class BenchmarkParametersParser {
          params.getNumberOfConsumers() % params.getNumberOfQueues() != 0))
       throw new IllegalArgumentException("Number of consumers must be a multiple of number of queues!");
 
-    if (params.getNumberOfMessages() != null && params.getPackageSize() == null ||
-        params.getPackageSize() != null && params.getNumberOfMessages() == null)
-      throw new IllegalArgumentException("In message-count mode, both number of messages and package size has to be specified!");
+    if (params.getNumberOfProducers() != null && params.getNumberOfConsumers() != null &&
+        (params.getPackageSize() != null || params.getNumberOfMessages() != null))
+      throw new IllegalArgumentException("Message-count mode can be applied only for one of producers or consumers but not for both!");
+
+    if (params.getNumberOfConsumers() != null &&
+        params.getNumberOfMessages() != null && params.getPackageSize() != null)
+      throw new IllegalArgumentException("In consumers-message-count mode package size cannot be defined!");
+
+    if (params.getNumberOfProducers() != null &&
+        (params.getNumberOfMessages() != null && params.getPackageSize() == null ||
+         params.getPackageSize() != null && params.getNumberOfMessages() == null))
+      throw new IllegalArgumentException("In producers-message-count mode, both number of messages and package size has to be specified!");
   }
 }

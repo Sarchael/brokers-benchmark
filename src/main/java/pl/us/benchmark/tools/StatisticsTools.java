@@ -16,8 +16,14 @@ public class StatisticsTools {
     int time = 5;
     FileWriter out = new FileWriter(createFileName(benchmarkParameters));
     out.write("time,consuming,producing\n");
-    for (int i = 0; i < consumersStats.size(); i++) {
-      out.write(time + "," + consumersStats.get(i) + "," + producersStats.get(i) + "\n");
+    int size = 0;
+    if (consumersStats.size() > producersStats.size())
+      size = consumersStats.size();
+    else
+      size = producersStats.size();
+    for (int i = 0; i < size; i++) {
+      out.write(time + "," + (i < consumersStats.size() ? consumersStats.get(i) : 0) + "," +
+                                 (i < producersStats.size() ? producersStats.get(i) : 0) + "\n");
       time += 5;
     }
     out.close();
@@ -48,7 +54,7 @@ public class StatisticsTools {
           for (Statistic pair : statistics) {
             if (pair.getBroker() == Broker.RABBITMQ && statistic.getSize().equals(pair.getSize()) &&
                 statistic.getQueues().equals(pair.getQueues()) && statistic.getConsumers().equals(pair.getConsumers()) &&
-                statistic.getProducers().equals(pair.getProducers()) && statistic.getPrefetchCount().equals(pair.getPrefetchCount())) {
+                statistic.getProducers().equals(pair.getProducers())) {
               Map<Broker, Statistic> pairedStats = new HashMap<>();
               pairedStats.put(statistic.getBroker(), statistic);
               pairedStats.put(pair.getBroker(), pair);
@@ -79,7 +85,6 @@ public class StatisticsTools {
         case 'Q' -> statistic.setQueues(Integer.parseInt(x.substring(1)));
         case 'P' -> statistic.setProducers(Integer.parseInt(x.substring(1)));
         case 'C' -> statistic.setConsumers(Integer.parseInt(x.substring(1)));
-        case 'F' -> statistic.setPrefetchCount(Integer.parseInt(x.substring(1)));
         default -> statistic.setBroker(Broker.getByName(x));
       }
     });
@@ -123,7 +128,6 @@ public class StatisticsTools {
     fileName += "-Q" + benchmarkParameters.getNumberOfQueues();
     fileName += "-P" + (benchmarkParameters.getNumberOfProducers() != null ? benchmarkParameters.getNumberOfProducers() : 0);
     fileName += "-C" + (benchmarkParameters.getNumberOfConsumers() != null ? benchmarkParameters.getNumberOfConsumers() : 0);
-    fileName += "-F" + (benchmarkParameters.getPrefetchCount() != null ? benchmarkParameters.getPrefetchCount() : 0);
     fileName += ".csv";
     return fileName;
   }
@@ -154,7 +158,7 @@ public class StatisticsTools {
     FileWriter out = new FileWriter(fileName);
 
     out.write(
-      "Broker,Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów,Prefetch count," +
+      "Broker,Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów," +
       "Liczba odebranych wiadomości łącznie,Liczba odebranych wiadomości per kolejka," +
       "Rozmiar odebranych wiadomości łącznie,Rozmiar odebranych wiadomości per kolejka," +
       "Liczba wysłanych wiadomości łącznie,Liczba wysłanych wiadomości per kolejka," +
@@ -163,7 +167,7 @@ public class StatisticsTools {
 
     for (Statistic s : stats) {
       out.write(s.getBroker().name() + "," + s.getSize() + "," + s.getQueues() + "," + s.getProducers() + "," +
-                s.getConsumers() + "," + s.getPrefetchCount() + "," + s.getTotalThroughputMessagesIn() + "," + s.getQueueThroughputMessagesIn() + "," +
+                s.getConsumers() + "," + s.getTotalThroughputMessagesIn() + "," + s.getQueueThroughputMessagesIn() + "," +
                 s.getTotalThroughputTransferIn() + "," + s.getQueueThroughputTransferIn() + "," +
                 s.getTotalThroughputMessagesOut() + "," + s.getQueueThroughputMessagesOut() + "," +
                 s.getTotalThroughputTransferOut() + "," + s.getQueueThroughputTransferOut() + "\n");
@@ -179,7 +183,7 @@ public class StatisticsTools {
     //FileWriter out = new FileWriter(fileName);
 
     out.write(
-      "Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów,Prefetch count," +
+      "Rozmiar wiadomości,Liczba kolejek/topiców,Liczba producentów,Liczba konsumentów," +
       "(KAFKA) Liczba odebranych wiadomości łącznie,(KAFKA) Liczba odebranych wiadomości per kolejka," +
       "(KAFKA) Rozmiar odebranych wiadomości łącznie,(KAFKA) Rozmiar odebranych wiadomości per kolejka," +
       "(KAFKA) Liczba wysłanych wiadomości łącznie,(KAFKA) Liczba wysłanych wiadomości per kolejka," +
@@ -194,7 +198,7 @@ public class StatisticsTools {
       Statistic sk = pairedStats.get(Broker.KAFKA);
       Statistic sr = pairedStats.get(Broker.RABBITMQ);
       out.write(
-        sk.getSize() + "," + sk.getQueues() + "," + sk.getProducers() + "," + sk.getConsumers() + "," + sk.getPrefetchCount() + "," +
+        sk.getSize() + "," + sk.getQueues() + "," + sk.getProducers() + "," + sk.getConsumers() + "," +
         sk.getTotalThroughputMessagesIn() + "," + sk.getQueueThroughputMessagesIn() + "," +
         sk.getTotalThroughputTransferIn() + "," + sk.getQueueThroughputTransferIn() + "," +
         sk.getTotalThroughputMessagesOut() + "," + sk.getQueueThroughputMessagesOut() + "," +
