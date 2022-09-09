@@ -9,6 +9,10 @@ public class Statistic {
   private Integer queues;
   private Integer producers;
   private Integer consumers;
+  private Integer numberOfMessages;
+  private Integer producingTime;
+  private Integer consumingTime;
+  private String pairingString;
   private Integer totalThroughputMessagesIn;
   private Integer queueThroughputMessagesIn;
   private Integer totalThroughputTransferIn;
@@ -64,6 +68,38 @@ public class Statistic {
 
   public void setConsumers(Integer consumers) {
     this.consumers = consumers;
+  }
+
+  public Integer getNumberOfMessages() {
+    return numberOfMessages;
+  }
+
+  public void setNumberOfMessages(Integer numberOfMessages) {
+    this.numberOfMessages = numberOfMessages;
+  }
+
+  public Integer getProducingTime() {
+    return producingTime;
+  }
+
+  public void setProducingTime(Integer producingTime) {
+    this.producingTime = producingTime;
+  }
+
+  public Integer getConsumingTime() {
+    return consumingTime;
+  }
+
+  public void setConsumingTime(Integer consumingTime) {
+    this.consumingTime = consumingTime;
+  }
+
+  public String getPairingString() {
+    return pairingString;
+  }
+
+  public void setPairingString(String pairingString) {
+    this.pairingString = pairingString;
   }
 
   public Integer getTotalThroughputMessagesIn() {

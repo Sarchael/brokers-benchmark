@@ -22,6 +22,9 @@ public abstract class ApacheKafkaWorker extends Thread {
   protected AtomicBoolean run;
   protected boolean brokerOnLocalhost;
 
+  protected long startTimestamp;
+  protected long finishTimestamp;
+
   public abstract void doWork();
 
   public ApacheKafkaWorker(BenchmarkWorkerType type, int workerNumber, int topicNumber,
@@ -55,6 +58,14 @@ public abstract class ApacheKafkaWorker extends Thread {
 
   public Long getProcessedMessages() {
     return processedMessages.get();
+  }
+
+  public long getStartTimestamp() {
+    return startTimestamp;
+  }
+
+  public long getFinishTimestamp() {
+    return finishTimestamp;
   }
 
   public boolean isRunning() {

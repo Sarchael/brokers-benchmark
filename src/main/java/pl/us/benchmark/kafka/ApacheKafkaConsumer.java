@@ -28,19 +28,25 @@ public class ApacheKafkaConsumer extends ApacheKafkaWorker {
 
   private void runInTimeMode() {
     while (run.get()) {
-      processedMessages.addAndGet(consumer.poll(Duration.ofMillis(10)).count());
+      processedMessages.addAndGet(consumer.poll(Duration.ofMillis(500)).count());
     }
     consumer.commitSync();
+    consumer.unsubscribe();
+    consumer.close();
   }
 
   private void runInMessageCountMode() {
+    this.startTimestamp = System.currentTimeMillis();
     while (true) {
-      int recordsCount = consumer.poll(Duration.ofMillis(10)).count();
+      int recordsCount = consumer.poll(Duration.ofMillis(500)).count();
       processedMessages.addAndGet(recordsCount);
       if (!messagePool.registerPackage(recordsCount))
         break;
     }
     consumer.commitSync();
+    this.finishTimestamp = System.currentTimeMillis();
+    consumer.unsubscribe();
+    consumer.close();
     run.set(false);
   }
 }

@@ -5,8 +5,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 public class RabbitConnectionFactory {
@@ -15,54 +14,53 @@ public class RabbitConnectionFactory {
   private static final String CONNECTION_NAME_PREFIX = "BENCHMARK_CONNECTION_";
 
   private final ConnectionFactory factory;
+  private Map<Channel, Connection> channelsMap;
+  private List<String> declaredQueues;
 
-  private List<Connection> connections;
-  private List<Channel> channels;
-
-  private RabbitConnectionFactory() {
+  private RabbitConnectionFactory(boolean localInstance) {
+    this.channelsMap = Collections.synchronizedMap(new HashMap<>());
+    this.declaredQueues = new ArrayList<>();
     this.factory = new ConnectionFactory();
-    this.connections = new ArrayList<>();
-    this.channels = new ArrayList<>();
+    this.factory.setHost(localInstance ? RabbitProperties.HOST_LOCAL : RabbitProperties.HOST);
+    this.factory.setPort(RabbitProperties.PORT);
+    this.factory.setUsername(RabbitProperties.USERNAME);
+    this.factory.setPassword(RabbitProperties.PASSWORD);
   }
 
-  public static RabbitConnectionFactory getInstance() {
-    if (INSTANCE == null)
-      INSTANCE = new RabbitConnectionFactory();
+  public synchronized static RabbitConnectionFactory getInstance() {
     return INSTANCE;
   }
 
-  public Channel createChannel(String queueName, String connectionNamePostfix, boolean localInstance) throws IOException, TimeoutException {
-    factory.setHost(localInstance ? RabbitProperties.HOST_LOCAL : RabbitProperties.HOST);
-    factory.setPort(RabbitProperties.PORT);
-    factory.setUsername(RabbitProperties.USERNAME);
-    factory.setPassword(RabbitProperties.PASSWORD);
+  public synchronized static RabbitConnectionFactory getInstance(boolean localInstance) {
+    if (INSTANCE == null)
+      INSTANCE = new RabbitConnectionFactory(localInstance);
+    return INSTANCE;
+  }
 
+  public synchronized Channel createChannel(String queueName, String connectionNamePostfix) throws IOException, TimeoutException {
     Connection connection = factory.newConnection(CONNECTION_NAME_PREFIX + connectionNamePostfix);
     Channel channel = connection.createChannel();
-    channel.queueDeclare(queueName, false, false, false, null);
-    connections.add(connection);
-    channels.add(channel);
+    if (!declaredQueues.contains(queueName)) {
+      channel.queueDeclare(queueName, false, false, false, null);
+      declaredQueues.add(queueName);
+    }
+    channelsMap.put(channel, connection);
     return channel;
   }
 
-  public void closeConnection(Channel channel) throws IOException, TimeoutException {
-    Connection connection = channel.getConnection();
-    channels.remove(channel);
-    connections.remove(connection);
-    channel.close();
-    connection.close();
+  public void closeAllConnectionsForce() {
+    closeAllConnectionsGracefully();
   }
 
-  public void closeAllConnections() {
-    for (Channel channel : channels)
-      try {
-        channel.close();
-      } catch (Exception e) {}
-    for (Connection connection : connections)
-      try {
-        connection.close();
-      } catch (Exception e) {}
-    channels = new ArrayList<>();
-    connections = new ArrayList<>();
+  public void closeAllConnectionsGracefully() {
+    synchronized (channelsMap) {
+      for (Map.Entry<Channel, Connection> entry : channelsMap.entrySet()) {
+        try {
+          entry.getValue().close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
   }
 }

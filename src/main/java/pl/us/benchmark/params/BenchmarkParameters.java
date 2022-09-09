@@ -14,6 +14,7 @@ public class BenchmarkParameters {
   private Integer packageSize;
   private Boolean statisticsTool;
   private Boolean pairResults;
+  private String pairingString;
 
   public Broker getBroker() {
     return broker;
@@ -101,5 +102,13 @@ public class BenchmarkParameters {
 
   public void setPairResults(Boolean pairResults) {
     this.pairResults = pairResults;
+  }
+
+  public String getPairingString() {
+    return pairingString;
+  }
+
+  public void setPairingString(String pairingString) {
+    this.pairingString = pairingString;
   }
 }

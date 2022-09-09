@@ -21,7 +21,8 @@ public class RabbitProducer extends RabbitWorker {
         channel.basicPublish("", QUEUE_NAME, null, MESSAGE.getBytes());
         processedMessages.incrementAndGet();
       }
-    else
+    else {
+      this.startTimestamp = System.currentTimeMillis();
       while (run.get()) {
         if (numberOfMessages.get() <= 0) {
           Optional<Integer> pack = messagePool.getPackage();
@@ -30,10 +31,12 @@ public class RabbitProducer extends RabbitWorker {
           else
             break;
         }
-        channel.basicPublish("", QUEUE_NAME, null, MESSAGE.getBytes());
+        channel.basicPublish("", QUEUE_NAME, true, null, MESSAGE.getBytes());
         processedMessages.incrementAndGet();
         numberOfMessages.decrementAndGet();
       }
+      this.finishTimestamp = System.currentTimeMillis();
+    }
     run.set(false);
   }
 }

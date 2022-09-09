@@ -2,6 +2,7 @@ package pl.us.benchmark.kafka;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.MetricName;
 import pl.us.benchmark.BenchmarkWorkerType;
 
 import java.util.Optional;
@@ -20,7 +21,6 @@ public class ApacheKafkaProducer extends ApacheKafkaWorker {
   public void doWork() {
     producer = new KafkaProducer<>(brokerOnLocalhost ? ApacheKafkaProperties.getProducerPropsLocal()
                                                      : ApacheKafkaProperties.getProducerPropsRemote());
-
     if (timeMode)
       runInTimeMode();
     else
@@ -30,12 +30,15 @@ public class ApacheKafkaProducer extends ApacheKafkaWorker {
   private void runInTimeMode() {
     while (run.get()) {
       producer.send(new ProducerRecord<>(TOPIC_NAME, null, MESSAGE));
-      processedMessages.incrementAndGet();
+      long msgs = processedMessages.incrementAndGet();
+      if (msgs % 100_000 == 0)
+        producer.flush();
     }
     producer.flush();
   }
 
   private void runInMessageCountMode() {
+    this.startTimestamp = System.currentTimeMillis();
     while (true) {
       if (numberOfMessages == 0) {
         Optional<Integer> pack = messagePool.getPackage();
@@ -49,6 +52,7 @@ public class ApacheKafkaProducer extends ApacheKafkaWorker {
       numberOfMessages--;
     }
     producer.flush();
+    this.finishTimestamp = System.currentTimeMillis();
     run.set(false);
   }
 }

@@ -28,7 +28,7 @@ public class ApacheKafkaProperties {
   }
 
   public static Properties getProducerPropsRemote() {
-    producerProps.put("bootstrap.servers", "192.168.0.31:9093");
+    producerProps.put("bootstrap.servers", "192.168.1.31:9093");
     return producerProps;
   }
 
@@ -38,7 +38,7 @@ public class ApacheKafkaProperties {
   }
 
   public static Properties getConsumerPropsRemote() {
-    consumerProps.put("bootstrap.servers", "192.168.0.31:9093");
+    consumerProps.put("bootstrap.servers", "192.168.1.31:9093");
     return consumerProps;
   }
 }

@@ -4,9 +4,7 @@ import pl.us.benchmark.MessagePool;
 import pl.us.benchmark.params.BenchmarkParameters;
 import pl.us.benchmark.tools.StatisticsTools;
 
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class RabbitOutOfMessagesWorker extends TimerTask {
   private List<RabbitWorker> consumers;
@@ -33,6 +31,7 @@ public class RabbitOutOfMessagesWorker extends TimerTask {
   public void run() {
     if (consumers.stream().mapToLong(RabbitWorker::getProcessedMessages).sum() >= messagePool.getMessageCount()) {
       try {
+        long finishTimestamp = System.currentTimeMillis();
         ownTimer.cancel();
         statisticsTimer.cancel();
         Thread.sleep(1000);
@@ -41,12 +40,12 @@ public class RabbitOutOfMessagesWorker extends TimerTask {
         List<Long> producersStats = statisticsWorker.getProducersStats();
 
         statisticsWorker.cancel();
+        OptionalLong consumersAvgTime = consumers.stream().mapToLong(x -> finishTimestamp - x.getStartTimestamp()).max();
         consumers.forEach(Thread::interrupt);
 
-        Thread.sleep(5000);
-        RabbitConnectionFactory.getInstance().closeAllConnections();
+        RabbitConnectionFactory.getInstance().closeAllConnectionsForce();
 
-        StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
+        StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters, consumersAvgTime, OptionalLong.empty(), 1000);
       } catch (Exception e) {
         e.printStackTrace();
       } finally {

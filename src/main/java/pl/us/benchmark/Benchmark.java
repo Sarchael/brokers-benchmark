@@ -22,6 +22,8 @@ public class Benchmark {
   private List<ApacheKafkaWorker> kafkaConsumerThreads = new ArrayList<>();
   private ApacheKafkaStatisticsWorker kafkaStatisticsWorkerThread;
 
+  private long startTimestamp;
+
   public Benchmark(String[] args) {
     benchmarkParameters = BenchmarkParametersParser.parse(Arrays.asList(args));
   }
@@ -50,6 +52,7 @@ public class Benchmark {
       prepareRabbitProducerThreads();
     if (benchmarkParameters.getNumberOfConsumers() != null)
       prepareRabbitConsumerThreads();
+    this.startTimestamp = System.currentTimeMillis();
     if (benchmarkParameters.getNumberOfProducers() != null)
       runRabbitProducers();
     if (benchmarkParameters.getNumberOfConsumers() != null)
@@ -205,16 +208,18 @@ public class Benchmark {
         }
       }
 
+      RabbitConnectionFactory.getInstance().closeAllConnectionsForce();
+
+      long finishTimestamp = System.currentTimeMillis();
+
       statisticsWorkerTimer.cancel();
       Thread.sleep(1000);
       List<Long> consumersStats = rabbitStatisticsWorkerThread.getConsumersStats();
       List<Long> producersStats = rabbitStatisticsWorkerThread.getProducersStats();
       rabbitStatisticsWorkerThread.cancel();
+      OptionalLong producersAvgTime = OptionalLong.of(finishTimestamp - this.startTimestamp);
 
-      Thread.sleep(5000);
-      RabbitConnectionFactory.getInstance().closeAllConnections();
-
-      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
+      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters, OptionalLong.empty(), producersAvgTime, 1000);
     } catch (InterruptedException | IOException e) {
       e.printStackTrace();
     }
@@ -247,8 +252,19 @@ public class Benchmark {
       List<Long> consumersStats = kafkaStatisticsWorkerThread.getConsumersStats();
       List<Long> producersStats = kafkaStatisticsWorkerThread.getProducersStats();
       kafkaStatisticsWorkerThread.cancel();
+      OptionalLong consumersAvgTime = OptionalLong.empty();
+      OptionalLong producersAvgTime = OptionalLong.empty();
 
-      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
+      if (kafkaConsumerThreads != null && !kafkaConsumerThreads.isEmpty()) {
+        consumersAvgTime = OptionalLong.of(kafkaConsumerThreads.stream().mapToLong(x -> x.getFinishTimestamp()).max().getAsLong() -
+          kafkaConsumerThreads.stream().mapToLong(x -> x.getStartTimestamp()).min().getAsLong());
+      }
+      if (kafkaProducerThreads != null && !kafkaProducerThreads.isEmpty()) {
+        producersAvgTime = OptionalLong.of(kafkaProducerThreads.stream().mapToLong(x -> x.getFinishTimestamp()).max().getAsLong() -
+          kafkaProducerThreads.stream().mapToLong(x -> x.getStartTimestamp()).min().getAsLong());
+      }
+
+      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters, consumersAvgTime, producersAvgTime, 1000);
     } catch (InterruptedException | IOException e) {
       e.printStackTrace();
     }

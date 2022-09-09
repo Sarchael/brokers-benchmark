@@ -13,6 +13,8 @@ public class RabbitConsumer extends RabbitWorker {
 
   @Override
   public void doWork() throws IOException {
+    if (!timeMode)
+      this.startTimestamp = System.currentTimeMillis();
     channel.basicConsume(QUEUE_NAME,
                          true,
                          (consumerTag, delivery) -> processedMessages.incrementAndGet(),

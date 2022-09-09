@@ -28,11 +28,12 @@ public class BenchmarkParametersParser {
       case "-t", "--time" -> params.setBenchmarkDuration(Integer.parseInt(value));
       case "-n", "--number-of-messages" -> params.setNumberOfMessages(Integer.parseInt(value));
       case "-m", "--messages-in-package" -> params.setPackageSize(Integer.parseInt(value));
+      case "-r", "--pairing-string" -> params.setPairingString(value);
       case "-st", "--statistics-tool" -> params.setStatisticsTool(Boolean.parseBoolean(value));
       case "-pr", "--pair-results" -> params.setPairResults(Boolean.parseBoolean(value));
       default -> throw new IllegalArgumentException(
         "Unknown parameter \"" + key + "\". " +
-        "Available parameters are: -b, -l, -q, -p, -c, -s, -t, -n, -m, -st, -pr"
+        "Available parameters are: -b, -l, -q, -p, -c, -s, -t, -n, -m, -r, -st, -pr"
       );
     }
   }

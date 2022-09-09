@@ -28,6 +28,9 @@ public abstract class RabbitWorker extends Thread {
 
   private boolean brokerOnLocalhost;
 
+  protected long startTimestamp;
+  protected long finishTimestamp;
+
   public abstract void doWork() throws IOException;
 
   public RabbitWorker(BenchmarkWorkerType type, int workerNumber, int queueNumber,
@@ -49,20 +52,13 @@ public abstract class RabbitWorker extends Thread {
   public void run() {
     THREAD_NAME = Thread.currentThread().getName();
     try {
-      channel = RabbitConnectionFactory.getInstance()
+      channel = RabbitConnectionFactory.getInstance(brokerOnLocalhost)
                                        .createChannel(QUEUE_NAME,
-                                                      workerNumber.toString(),
-                                                      brokerOnLocalhost);
+                                                      workerNumber.toString());
       doWork();
-      if (type == BenchmarkWorkerType.PRODUCER)
-        closeConnection();
     } catch (IOException | TimeoutException e) {
       e.printStackTrace();
     }
-  }
-
-  public void closeConnection() throws IOException, TimeoutException {
-    RabbitConnectionFactory.getInstance().closeConnection(channel);
   }
 
   public void stopWorker() {
@@ -75,6 +71,14 @@ public abstract class RabbitWorker extends Thread {
 
   public Long getProcessedMessages() {
     return processedMessages.get();
+  }
+
+  public long getStartTimestamp() {
+    return startTimestamp;
+  }
+
+  public long getFinishTimestamp() {
+    return finishTimestamp;
   }
 
   public boolean isRunning() {

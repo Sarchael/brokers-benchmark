@@ -3,9 +3,7 @@ package pl.us.benchmark.kafka;
 import pl.us.benchmark.params.BenchmarkParameters;
 import pl.us.benchmark.tools.StatisticsTools;
 
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class ApacheKafkaTimeoutWorker extends TimerTask {
   private List<ApacheKafkaWorker> producers;
@@ -39,9 +37,8 @@ public class ApacheKafkaTimeoutWorker extends TimerTask {
       producers.forEach(ApacheKafkaWorker::stopWorker);
       consumers.forEach(ApacheKafkaWorker::stopWorker);
 
-      Thread.sleep(5000);
-
-      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters);
+      StatisticsTools.saveStats(consumersStats, producersStats, benchmarkParameters, OptionalLong.of(consumersStats.stream().mapToLong(x -> x * 5).sum()),
+        OptionalLong.of(producersStats.stream().mapToLong(x -> x * 5).sum()), 1);
     } catch (Exception e) {
       e.printStackTrace();
     }
